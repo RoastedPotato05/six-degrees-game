@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css" />
+    <title>Six Degrees</title>
+</head>
+<!-- fit height to entire screen -->
+<body style="width: 100vw; height: 100vh; margin: 0; overflow: hidden; box-sizing: border-box; flex-direction: column;">
+
+    
+    <!-- home screen -->    
+    <div id="view-home" class="app-view" style="display: flex; flex-direction: column; height: calc(100vh - 220px); width: 100%; min-height: 0;">
+        <div style="display: flex; width: 100%; flex: 1; min-height: 0;">
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+                <div style="display: flex; text-align: center; padding: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;">&nbsp;</span>
+                </div>
+                
+            </div>
+
+            <div style="margin: 0 0px; flex: 1; min-height: 0; display: flex; flex-direction: column; border-left: 4px solid #161c22; border-right: 4px solid #161c22; padding: 20px; box-sizing: border-box;">
+                <div style="display: flex; flex-direction: column; text-align: center;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 64px; color: #ffffff; background: #161c22; margin: -20px -20px 0 -20px; padding: 20px;">Six Degrees</span>
+                </div>
+
+                <div style="display: flex; flex-direction: row; margin-top: 30px; gap: 20px; flex: 1; min-height: 0;">
+                    <div style="display: flex; flex-direction: column; width: 60%; overflow-y: auto; padding: 10px; box-sizing: border-box;">
+                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: center; align-items: center; gap: 20px;">
+                            <button id="nav-left" class="nav-button" style="font-size: 36px; font-weight: 600;">❮</button>
+                            <span id="home-menu-gamemode-text" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px; color: #edae49;">STANDARD</span>
+                            <button id="nav-right" class="nav-button" style="font-size: 36px; font-weight: 600;">❯</button>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="start-input-block">
+                            <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">START</label>
+                            <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                                <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
+                                    <input id="standard-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                                    <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                                </div>
+                                <button id="standard-start-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                                    <img src="images/dice.png" style="width: 28px; height: 28px;">
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="goal-input-block">
+                            <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">GOAL</label>
+                            <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                                <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
+                                    <input id="standard-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                                    <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                                </div>
+                                <button id="standard-goal-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                                    <img src="images/dice.png" style="width: 28px; height: 28px;">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; width: 40%; overflow-x: auto;">
+                        <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
+                            <button id="standard-start-run-btn" class="flex-child primary-orange" style="width: 100%; height: 80px;">
+                                <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Start Run</span>
+                            </button>
+                            <div style="display:flex; flex-direction: row; gap: 20px;">
+                                <button id="standard-stats-btn" class="flex-child primary-green" style="width: 70%; height: 80px;">
+                                    <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Stats</span>
+                                </button>
+                                <button id="standard-run-randomize-btn" class="flex-child primary-purple" style="width: 30%; height: 80px;">
+                                    <span id="dice-png"><img src="images/dice.png" style="width: 60px; height: 60px; position: relative; top: 3px"></span>
+                                    <span id="random-text" style="display: none;">...</span>
+                                </button>
+                            </div>
+                            <button id="standard-settings-btn" class="flex-child primary-blue" style="width: 100%; height: 80px;">
+                                <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Settings</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+                <div style="display: flex; text-align: center; padding: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;">&nbsp;</span>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- settings screen -->
+    <div id="view-settings" class="app-view" style="display: none; flex-direction: column; height: calc(100vh - 220px); min-height: 0;">
+        <div style="display: flex; width: 100%; height: 100%; min-height: 0;">
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+                <div style="display: flex; text-align: center; padding: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;">&nbsp;</span>
+                </div>
+                
+            </div>
+
+            <div style="margin: 0 0px; width: 60%; flex: 1; min-height: 0; display: flex; flex-direction: column; border-left: 4px solid #161c22; border-right: 4px solid #161c22; padding: 20px;">
+                <div style="display: flex; flex-direction: column; text-align: center; ">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 64px; color: #ffffff; background: #161c22; margin: -20px -20px 0 -20px; padding: 20px;">Six Degrees</span>
+                </div>
+
+                <div style="display: flex; flex-direction: row; margin-top: 30px; gap: 20px; flex: 1; min-height: 0;">
+                    <div style="display: flex; flex-direction: column; width: 50%; overflow-y: auto; padding: 10px; box-sizing: border-box;">
+                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: left; align-items: center; gap: 20px;">
+                            <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px;" class="text-green">AUDIO</span>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; flex-direction: row; align-items: center; margin-top: 20px;">
+                                <label for="master-volume" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 50%;" class="text-gray">Master Volume</label>
+                                <input type="range" id="master-volume" min="0" max="1" value="0.5" step="0.01" style="cursor: pointer; accent-color: #659157; width: 50%; position: relative; top: 4px;">
+                            </div>
+                            <div style="display: flex; flex-direction: row; align-items: center; margin-top: 20px;">
+                                <label for="sfx-volume" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 50%;" class="text-gray">Sound Effects</label>
+                                <input type="range" id="sfx-volume" min="0" max="1" value="0.5" step="0.01" style="cursor: pointer; accent-color: #659157; width: 50%; position: relative; top: 4px;">
+                            </div>
+                            <div style="display: flex; flex-direction: row; align-items: center; margin-top: 20px;">
+                                <label for="music-volume" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 50%;" class="text-gray">Music</label>
+                                <input type="range" id="music-volume" min="0" max="1" value="0.5" step="0.01" style="cursor: pointer; accent-color: #659157; width: 50%; position: relative; top: 4px;">
+                            </div>
+                        </div>
+
+                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: left; align-items: center; gap: 20px;">
+                            <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px;" class="text-purple">HARD MODE</span>
+                        </div>
+                        <div style="margin-bottom: 30px;">
+                            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                                <div style="display: flex; flex-direction: row; align-items: center;">
+                                    <label for="target-name-only" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 280px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">Target Name Only</label>
+                                    <input type="checkbox" id="target-name-only" name="target-name-only" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88;">
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center;">
+                                    <label for="no-mcu" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 280px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No MCU</label>
+                                    <input type="checkbox" id="no-mcu" name="no-mcu" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88;">
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center;">
+                                    <label for="no-big-3" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 280px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No 'Big 3' Directors</label>
+                                    <input type="checkbox" id="no-big-3" name="no-big-3" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88;">
+                                </div>
+                                <br><span style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 11px; color: #99AABB; margin-left: 10px; width: 60%; position: relative; top: -50px;">(Steven Spielberg, Christopher Nolan, Quentin Tarantino, and their movies)</span>
+                            </div>
+                            <div style="display: flex; flex-direction: row; align-items: center; margin-top: -20px; flex-wrap: wrap; gap: 15px;">
+                                <div style="flex: 1 1 220px; display: flex; align-items: center; box-sizing: border-box;">
+                                    <label style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No TV Shows</label>
+                                    <button id="toggle-no-tv" class="custom-toggle-btn"></button>
+                                </div>
+                                <div style="flex: 1 1 220px; display: flex; align-items: center; box-sizing: border-box;">
+                                    <label style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No Movies</label>
+                                    <button id="toggle-no-movies" class="custom-toggle-btn"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; width: 50%; overflow-y: auto; padding: 10px; box-sizing: border-box;">
+                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: right; align-items: center; gap: 20px;">
+                            <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px;" class="text-orange">BANNED ITEMS</span>
+                        </div>
+                        <div class="search-container" style="margin-top: 20px; position: relative;">
+                            <input id="banned-item-search" placeholder="Search for an item to ban..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                        </div>
+                        <div id="banned-item-container" style="margin-top: 20px; flex: 1; overflow-y: auto; border: 2px solid #99AABB; box-sizing: border-box;">
+                            <div id="banned-item-container-text" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; justify-content: center; align-items: center; display: flex; height: 100%; box-sizing: border-box;">
+                                <span>Banned items will appear here</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+                <div style="display: flex; text-align: center; padding: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;">&nbsp;</span>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- standard mode screen -->
+    <div id="view-standard" class="app-view" style="display: none; flex-direction: column; height: calc(100vh - 220px); min-height: 0;">
+        <div style="display: flex; width: 100%; flex: 1; min-height: 0;">
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+                <div style="display: flex; text-align: center; padding: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px; " class="text-blue">PATH</span>
+                </div>
+                <div id="path-container" style="display: flex; border: 2px solid #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600;"></div>
+            </div>
+
+            <div style="border-left: 4px solid #161c22; border-right: 4px solid #161c22; margin: 0 0px; width: 60%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px 20px 0px 20px; box-sizing: border-box;">
+                <div style="display: flex; flex-direction: column; text-align: center;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 64px; color: #ffffff; background: #161c22; margin: -20px -20px 0 -20px; padding: 20px;">Six Degrees</span>
+                </div>
+
+                <div style="display: flex; flex-direction: row; margin-top: 40px; gap: 20px; flex: 1; min-height: 0;">
+                    <div style="display: flex; flex-direction: column; width: 100%; flex: 1; min-height: 0; padding: 10px 10px 0px 10px; box-sizing: border-box;">
+                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: center; align-items: center; gap: 20px;">
+                            <span id="standard-menu-gamemode-text" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px; color: #edae49;">STANDARD</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: row; gap: 20px; box-sizing: border-box; height: 100%; min-height: 0;">
+                            <div style="display:flex; flex-direction: column; width: 70%; padding: 10px 10px 0px 10px; margin-top: 0px; box-sizing: border-box; height: 100%; min-height: 0;">
+                                <div style="display:flex; height: auto; margin-top: 10px; box-sizing: border-box;">
+                                    <span id="current-title" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 50px;" class="text-green"></span>
+                                </div>
+                                <div id="cast/departments" class="text-green" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; display:flex; flex-direction: column; margin-top: 10px;"></div>
+                                <div style="margin-top: 10px; position: relative; display: flex; align-items: center; width: 100%;">
+                                    <input id="item-search" placeholder="Search for an item..." style="display: inline-block; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8;" autocomplete="off">
+                                    <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                                </div>
+                                <div id="name/movie-list" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; display:flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; align-content: flex-start; gap: 8px; width: 100%; padding: 10px 0px; box-sizing: border-box; flex: 1; min-height: 0; overflow-y: auto; margin-top: 20px;"></div>
+                            </div>
+                            <div id="current-poster" style="display:flex; width: 30%; margin-top: 10px; box-sizing: border-box;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin: 0; width: 20%; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; gap: 10px;">
+                <div style="display: flex; text-align: center; padding: 10px; margin-bottom: 10px;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px; " class="text-purple">TARGET</span>
+                </div>
+                <div id="target-poster" style="justify-content: center; align-items: center; display: flex; margin-bottom: 0px;"></div>
+                <div id="target-name" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 20px; text-align: center;"></div>
+                <div id="target-info" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; text-align: center; padding: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- footer -->
+    <footer id="app-footer" style="height: 220px; flex-shrink: 0; background-color: #161c22; display: flex; flex-direction: column; box-sizing: border-box;">
+        <!-- Main Footer Content Area (Switches based on active view) -->
+        <div style="display: flex; flex: 1; width: 100%; box-sizing: border-box; overflow: hidden;">
+            
+            <!-- Timer Footer Section -->
+            <div id="footer-timer-section" style="display: flex; flex-direction: row; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;">
+                <div style="width: 20%; padding: 20px; box-sizing: border-box; align-items: center; display: flex;">
+                    <button id="timer-return-btn" style="display: none; height: 100%; width: 100%; font-size: 50px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange"><span style="position: relative; top: -8px;">Return</span></button>
+                </div>
+                <div style="margin: 0 10px; width: 60%; display: flex; justify-content: center; align-items: center;">
+                    <div style="position: relative; top: -10px;">
+                        <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 164px; color: #f8f8f8; letter-spacing: -1px; display: inline-block; white-space: nowrap;">
+                            <span id="minutes" class="text-green" style="display: inline-block; width: 2.0ch; text-align: center;">00</span>.<span id="seconds" class="text-orange" style="display: inline-block; width: 2.0ch; text-align: center;">00</span>.<span id="milliseconds" class="text-purple" style="display: inline-block; width: 3.0ch; text-align: center;">000</span>
+                        </span> 
+                    </div>
+                </div>
+                <div style="width: 20%;"></div>
+            </div>
+
+            <!-- Settings Return Footer Section -->
+            <div id="footer-settings-section" style="display: none; flex-direction: row; width: 100%; height: 100%; padding: 10px; box-sizing: border-box;">
+                <div style="width: 35%;"></div>
+                <div style="width: 30%; display: flex; justify-content: center; align-items: center; padding: 10px;">
+                    <button id="settings-return-btn" style="height: 100%; width: 100%; font-size: 70px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange"><span style="position: relative; top: -8px;">Return</span></button>
+                </div>
+                <div style="width: 35%;"></div>
+            </div>
+
+        </div>
+
+        <!-- Persistent Credits Bar Across Bottom -->
+        <div id="credits" style="position: relative; top: 8px; height: 40px; width: 100%; background-color: #0f1316; flex-shrink: 0; box-sizing: border-box; flex-direction: row; display: flex; align-items: center; justify-content: center;">
+            <span style="text-align: center; font-family: 'Graphik', sans-serif; font-weight: 400; line-height: 4vh;" class="text-gray">Created by: @RoastedPotato05</span>
+            <div style="flex-shrink: 0; height: 100%; display: flex; align-items: center; padding: 0 10px;">
+                <img src="images/github.png" id="github-link" style="height: 70%; width: auto;">
+            </div>
+            <div style="flex-shrink: 0; height: 100%; display: flex; align-items: center; padding: 0 10px;">
+                <img src="images/letterboxd.png" id="letterboxd-link" style="height: 70%; width: auto;">
+            </div>
+            <div style="flex-shrink: 0; height: 100%; display: flex; align-items: center; padding: 0 10px;">
+                <img src="images/info.png" id="info-link" style="height: 70%; width: auto;">
+            </div>
+        </div>
+    </footer>
+
+
+    <div id="info-popup" style="display: none; overflow-y: auto; font-family: 'Graphik', sans-serif; width: 50%; height: 60%; border: 5px solid #99AABB; border-radius: 12px; background-color: #161c22; z-index: 10; position: absolute; top: 10%; left: 50%; transform: translate(-50%, -10%)">    
+        <p class="flex-child" style="font-weight: 600; font-size: 50px; margin: 10px 0px 0px 10px">Six Degrees</p>
+        <div id="info-exit" class="flex-child" style="font-size: 60px; width: 20px; height: 20px; position: absolute; top: 0px; right: 20px; cursor: pointer; color:#edae49" class="text-orange">×</div><br><br>
+        <p style="margin: 10px 5px 0px 10px; font-size: 30px; font-weight: 600;" class="text-gray">How To Play</p>
+        <p style="margin: 11px 5px 0px 20px; font-size: 18px">After choosing a starting item and a target item, the goal is simply to navigate from the starting item to the target item using the on-screen buttons for cast/crew and movies/tv. By default, you're given lots of information about people's credited works, movie cast and crew lists, as well as cast and crew for television shows. You're also given info cards that display some information about the target item(s), such as the starring actors and directors.
+            <br><br>Customization is also available in the <span class="text-blue">Settings</span> menu, such as limiting options to only television or movies and banning specific items, which prevents them from appearing in your runs.
+        </p>
+        
+        <br>
+        
+        <p style="margin: 11px 5px 0px 10px; font-weight: 600; font-size: 30px;" class="text-orange">STANDARD</p>
+        <p style="margin: 11px 5px 0px 20px; font-size: 18px">This is the standard gamemode, choose one starting item and one target item. You can use the small dice buttons at each input box to roll for a random item for that input, or use the large dice button to quickly start a run with a random start and target item.</p><br>
+
+        <p style="margin: 11px 5px 0px 10px; font-weight: 600; font-size: 30px;" class="text-green">DETOUR</p>
+        <p style="margin: 11px 5px 0px 20px; font-size: 18px">In this gamemode, you choose one starting item, one target item, and any number of detour items. These detours can be visited in any order, but all of them must be visited before the target item.</p><br>
+
+        <p style="margin: 11px 5px 0px 10px; font-weight: 600; font-size: 30px;" class="text-purple">ENDLESS</p>
+        <p style="margin: 11px 5px 0px 20px; font-size: 18px">In Endless mode, you choose a starting item and a target item, then after reaching the target item a new target is randomly chosen. In this mode. the player is NOT allowed to revisit items from previous target paths, but you can still revisit items in the current target's path. </p><br>
+
+        <br><br>
+        <p style="margin: 10px 0px 0px 10px">Created by @roastedpotato05</p>
+        <p style="margin: 10px 0px 0px 10px">Default music:<br> 
+                                    <span style="margin-left: 30px;">Late-Night Decaf by | e s c p | </span><br>
+                                    <span style="margin-left: 30px;">https://www.escp.space</span><br>
+                                    <span style="margin-left: 30px;">https://escp-music.bandcamp.com </span>
+        </p>
+        <br>
+    </div>
+
+    <div id="overlay" style="display: none; position: fixed; width: 200%; height: 200%; background-color: rgba(0,0,0,0.5);top: 0; left: 0; right: 0; bottom: 0;"></div>
+    
+
+    
+
+    <!-- Scripts -->
+     <script type="module" src="settings.js"></script>
+    <script type="module" src="shared.js"></script>
+    <script type="module" src="home.js"></script>
+    <script type="module" src="standard.js"></script>
+    
+    
+    
+</body>
+</html>
