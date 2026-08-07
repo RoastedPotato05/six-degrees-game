@@ -78,6 +78,7 @@ input {
 
 .primary-blue:hover {
   background: #13468a;
+  transition: background 0.1s ease-in-out;
 }
 
 .text-blue {
@@ -96,6 +97,7 @@ input {
 
 .primary-green:hover {
   background: #4b6d41;
+  transition: background 0.1s ease-in-out;
 }
 
 .text-green {
@@ -114,6 +116,7 @@ input {
 
 .primary-orange:hover {
   background: #b48130;
+  transition: background 0.1s ease-in-out;
 }
 
 .text-orange {
@@ -132,6 +135,7 @@ input {
 
 .primary-purple:hover {
   background: #613761;
+  transition: background 0.1s ease-in-out;
 }
 
 .text-purple {
@@ -235,6 +239,7 @@ footer {
 
 .search-result-item:hover {
   background: #151a1f;
+  transition: background 0.1s ease-in-out;
 }
 
 .path-item {
@@ -252,6 +257,7 @@ footer {
 
 .path-item:hover {
   background: #2c3844;
+  transition: background 0.1s ease-in-out;
 }
 
 .search-result-type {

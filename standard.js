@@ -71,7 +71,10 @@ export async function initStandard(startDataParam, goalDataParam) {
 
         // Render the target info
         const goalType = goalData.media_type;
-        if (goalType === 'movie') {
+        if (localStorage.getItem('target-name-only') === 'true') {
+            targetInfo.style.border = 'none';
+        }
+        else if (goalType === 'movie') {
             const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
             const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
 
@@ -385,6 +388,17 @@ async function loadStep(id, type) {                         // function for upda
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
                 btn.style.fontSize = '16px';
+                // hover effect, make the text white and background a lighter shade of gray
+                btn.addEventListener('mouseover', () => {
+                    btn.style.color = '#ffffff';
+                    btn.style.backgroundColor = '#3a4752';
+                    btn.style.transition = 'color 0.1s ease-in-out, background-color 0.1s ease-in-out';
+                });
+                btn.addEventListener('mouseout', () => {
+                    btn.style.color = '#99AABB';
+                    btn.style.backgroundColor = '#303943';
+                    btn.style.transition = 'color 0.1s ease-in-out, background-color 0.1s ease-in-out';
+                });
             } else {
                 const itemPosterPath = item.poster_path;
                 const itemName = item.title || item.name || '';
@@ -407,6 +421,15 @@ async function loadStep(id, type) {                         // function for upda
                 btn.style.cursor = 'pointer';
                 btn.style.border = '2px solid #99AABB';
                 btn.style.borderRadius = '2px';
+                // hover effect, make the border white
+                btn.addEventListener('mouseover', () => {
+                    btn.style.border = '2px solid #ffffff';
+                    btn.style.transition = 'border 0.1s ease-in-out';
+                });
+                btn.addEventListener('mouseout', () => {
+                    btn.style.border = '2px solid #99AABB';
+                    btn.style.transition = 'border 0.1s ease-in-out';
+                });
             }
             
             const targetType = isPersonTarget ? 'person' : (item.media_type || 'movie');
