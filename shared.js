@@ -1288,6 +1288,21 @@ function showInputError(inputElement, message) {
     }, 2000);
 }
 
+// initialize statistics
+let stats = JSON.parse(localStorage.getItem('stats')) || {
+    wins: 0,
+    winStreak: 0,
+    shortestPath: 0,
+    averagePath: 0,
+    longestPath: 0,
+    fastestTime: 0,
+    averageTime: 0,
+    slowestTime: 0,
+    mostVisited: {},
+    savedRuns: []
+};
+localStorage.setItem('stats', JSON.stringify(stats));
+
 
 
 

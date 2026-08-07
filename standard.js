@@ -583,6 +583,20 @@ async function loadStep(id, type) {                         // function for upda
             castTab.style.padding = '4px 12px';
             castTab.style.boxSizing = 'border-box';
             castTab.style.borderBottom = '4px solid #ffffff';
+            
+            castTab.addEventListener('mouseover', () => {
+                if (!castTab.style.color.includes('255, 255, 255')) {
+                    castTab.style.color = '#ffffff';
+                    castTab.style.transition = 'color 0.1s ease-in-out';
+                }
+            });
+
+            castTab.addEventListener('mouseout', () => {
+                if (!castTab.style.borderBottom.includes('255, 255, 255')) {
+                    castTab.style.color = tabColor;
+                    castTab.style.transition = 'color 0.1s ease-in-out';
+                }
+            });
 
             castTab.addEventListener('click', () => {
                 Array.from(tabsContainer.children).forEach(c => {
@@ -609,6 +623,20 @@ async function loadStep(id, type) {                         // function for upda
             crewTab.style.padding = '4px 12px';
             crewTab.style.boxSizing = 'border-box';
             crewTab.style.borderBottom = isCrewDefault ? '4px solid #ffffff' : '2px solid #99AABB';
+
+            crewTab.addEventListener('mouseover', () => {
+                if (!crewTab.style.color.includes('255, 255, 255')) {
+                    crewTab.style.color = '#ffffff';
+                    crewTab.style.transition = 'color 0.1s ease-in-out';
+                }
+            });
+
+            crewTab.addEventListener('mouseout', () => {
+                if (!crewTab.style.borderBottom.includes('255, 255, 255')) {
+                    crewTab.style.color = tabColor;
+                    crewTab.style.transition = 'color 0.1s ease-in-out';
+                }
+            });
 
             crewTab.addEventListener('click', () => {
                 Array.from(tabsContainer.children).forEach(c => {
@@ -703,6 +731,20 @@ async function loadStep(id, type) {                         // function for upda
         tabSpan.style.color = firstTab ? '#ffffff' : tabColor;
 
         const items = categories[tabName];
+
+        tabSpan.addEventListener('mouseover', () => {
+            if (!tabSpan.style.color.includes('255, 255, 255')) {
+                tabSpan.style.color = '#ffffff';
+                tabSpan.style.transition = 'color 0.1s ease-in-out';
+            }
+        });
+
+        tabSpan.addEventListener('mouseout', () => {
+            if (!tabSpan.style.borderBottom.includes('255, 255, 255')) {
+                tabSpan.style.color = tabColor;
+                tabSpan.style.transition = 'color 0.1s ease-in-out';
+            }
+        });
         
         tabSpan.addEventListener('click', () => {
             Array.from(tabsContainer.children).forEach(c => {

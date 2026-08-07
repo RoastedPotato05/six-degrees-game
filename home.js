@@ -228,6 +228,27 @@ standardStartRunBtn.addEventListener('click', async () => {
 standardGoalRandomizeBtn.addEventListener('click', async () => {
     const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
     const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
+    if (localStorage.getItem('no-tv') === 'true' && item.media_type === 'tv') {
+        standardGoalRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('no-movies') === 'true' && item.media_type === 'movie') {
+        standardGoalRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined' && BANNED_MCU.some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardGoalRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardGoalRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('bannedItems') && JSON.parse(localStorage.getItem('bannedItems')).some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardGoalRandomizeBtn.click();
+        return;
+    }
+
     await window.fetchDetails(item.id, item.media_type).then((details) => {
         standardGoalInput.value = `${details.title || details.name}`;
         inputData[standardGoalInput.id] = details;
@@ -237,6 +258,32 @@ standardGoalRandomizeBtn.addEventListener('click', async () => {
 standardStartRandomizeBtn.addEventListener('click', async () => {
     const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
     const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
+    console.log('filter status:', localStorage.getItem('mediaFilter'));
+    
+
+    if (localStorage.getItem('mediaFilter') === 'no-tv' && item.media_type === 'tv') {
+        console.log('Randomized item is a TV show, but TV shows are disabled. Re-randomizing...');
+        standardStartRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('mediaFilter') === 'no-movies' && item.media_type === 'movie') {
+        console.log('Randomized item is a Movie, but Movies are disabled. Re-randomizing...');
+        standardStartRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined' && BANNED_MCU.some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardStartRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardStartRandomizeBtn.click();
+        return;
+    }
+    if (localStorage.getItem('bannedItems') && JSON.parse(localStorage.getItem('bannedItems')).some(b => b.id === item.id && b.media_type === item.media_type)) {
+        standardStartRandomizeBtn.click();
+        return;
+    }
+
     await window.fetchDetails(item.id, item.media_type).then((details) => {
         standardStartInput.value = `${details.title || details.name}`;
         inputData[standardStartInput.id] = details;
