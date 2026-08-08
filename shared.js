@@ -1097,12 +1097,28 @@ function stop() {
     // Stop the stopwatch
     clearInterval(tInterval);
     difference = Date.now() - startTime; // Save elapsed time
+    window.difference = difference;
+
+    // Force the visual display to match the final calculated difference exactly
+    let updatedTime = new Date(difference);
+    let minutes = updatedTime.getUTCMinutes();
+    let seconds = updatedTime.getUTCSeconds();
+    let milliseconds = updatedTime.getUTCMilliseconds();
+
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+    milliseconds = milliseconds < 100 ? (milliseconds < 10 ? "00" + milliseconds : "0" + milliseconds) : milliseconds;
+
+    document.getElementById("minutes").textContent = minutes;
+    document.getElementById("seconds").textContent = seconds;
+    document.getElementById("milliseconds").textContent = milliseconds;
 }
 
 function reset() {
     // Stop the timer, reset values, and update display to zero
     clearInterval(tInterval);
     difference = 0;
+    window.difference = difference;
     document.getElementById("minutes").textContent = "00";
     document.getElementById("seconds").textContent = "00";
     document.getElementById("milliseconds").textContent = "000";
@@ -1180,14 +1196,18 @@ function switchView(viewId, params = {}) {
 
     const timerSection = document.getElementById('footer-timer-section');
     const settingsSection = document.getElementById('footer-settings-section');
+    const statsSection = document.getElementById('footer-stats-section');
     
     document.getElementById('timer-return-btn').style.display = 'none';
     
     if (timerSection) timerSection.style.display = 'none';
     if (settingsSection) settingsSection.style.display = 'none';
+    if (statsSection) statsSection.style.display = 'none';
 
     if (viewId === 'view-settings') {
         if (settingsSection) settingsSection.style.display = 'flex';
+    } else if (viewId === 'view-stats') {
+        if (statsSection) statsSection.style.display = 'flex';
     } else {
         if (timerSection) timerSection.style.display = 'flex';
     }
@@ -1203,6 +1223,8 @@ function switchView(viewId, params = {}) {
             window.initSettings();
         } else if (viewId === 'view-standard' && typeof window.initStandard === 'function') {
             window.initStandard(params.start, params.goal);
+        }else if (viewId === 'view-stats' && typeof window.initStats === 'function') {
+            window.initStats();
         }
     }
 }
@@ -1292,12 +1314,12 @@ function showInputError(inputElement, message) {
 let stats = JSON.parse(localStorage.getItem('stats')) || {
     wins: 0,
     winStreak: 0,
-    shortestPath: 0,
-    averagePath: 0,
-    longestPath: 0,
-    fastestTime: 0,
-    averageTime: 0,
-    slowestTime: 0,
+    shortestPath: null,
+    averagePath: null,
+    longestPath: null,
+    fastestTime: null,
+    averageTime: null,
+    slowestTime: null,
     mostVisited: {},
     savedRuns: []
 };

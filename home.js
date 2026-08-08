@@ -4,7 +4,8 @@ const standardStartRunBtn = document.getElementById('standard-start-run-btn');
 const standardGoalRandomizeBtn = document.getElementById('standard-goal-randomize-btn');
 const standardStartRandomizeBtn = document.getElementById('standard-start-randomize-btn');
 const standardRunRandomizeBtn = document.getElementById('standard-run-randomize-btn');
-const standardSettingsBtn = document.getElementById('standard-settings-btn');
+const settingsBtn = document.getElementById('settings-btn');
+const statsBtn = document.getElementById('stats-btn');
 
 let randomItems = null;
 let numRandomItems = 200;
@@ -311,6 +312,10 @@ standardRunRandomizeBtn.addEventListener('click', async () => {
 });
 
 
-standardSettingsBtn.addEventListener('click', () => {
+settingsBtn.addEventListener('click', () => {
     window.switchView('view-settings');
+});
+
+statsBtn.addEventListener('click', () => {
+    window.switchView('view-stats');
 });

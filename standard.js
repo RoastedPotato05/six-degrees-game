@@ -782,7 +782,61 @@ timerReturnBtn.addEventListener('click', () => {
 
 
 function runComplete() {
+
     window.playSoundEffect('fnaf.mp3');
     window.playSoundEffect('happy_wheels.mp3');
     window.stop();
+
+    let stats = JSON.parse(localStorage.getItem('stats')) || {};
+
+    stats.wins = (stats.wins || 0) + 1;
+
+    stats.winStreak = (stats.winStreak || 0) + 1;
+
+    if (stats.shortestPath == null || path.length < stats.shortestPath) {
+        stats.shortestPath = path.length;
+    }
+
+    if (stats.averagePath == null) {
+        stats.averagePath = path.length;
+    } else {
+        stats.averagePath = ((stats.averagePath * (stats.wins - 1)) + path.length) / stats.wins;
+    }
+
+    if (stats.longestPath == null || path.length > stats.longestPath) {
+        stats.longestPath = path.length;
+    }
+
+    console.log('Current difference (time taken):', window.difference);
+    if (stats.fastestTime == null || window.difference < stats.fastestTime) {
+        stats.fastestTime = window.difference;
+    }
+
+    if (stats.averageTime == null) {
+        stats.averageTime = window.difference;
+    } else {
+        stats.averageTime = ((stats.averageTime * (stats.wins - 1)) + window.difference) / stats.wins;
+    }
+
+    if (stats.slowestTime == null || window.difference > stats.slowestTime) {
+        stats.slowestTime = window.difference;
+    }
+
+    
+    // update mostVisited by incrementing if the item is already in the dict, or adding it if not
+    for (let i = 0; i < path.length; i++) {
+        const item = path[i];
+        const key = `${item.name}`;
+        if (stats.mostVisited) {
+            stats.mostVisited[key] = (stats.mostVisited[key] || 0) + 1;
+        } else {
+            stats.mostVisited = {};
+            stats.mostVisited[key] = 1;
+        }
+    }
+
+    localStorage.setItem('stats', JSON.stringify(stats));
+
+
+    
 }
