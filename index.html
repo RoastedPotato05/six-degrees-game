@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" type="image/png" href="images/six-degrees-logo.png">
     <title>Six Degrees</title>
 </head>
 <!-- fit height to entire screen -->
@@ -434,6 +435,13 @@
 
     <div id="overlay" style="display: none; position: fixed; width: 200%; height: 200%; background-color: rgba(0,0,0,0.5);top: 0; left: 0; right: 0; bottom: 0;"></div>
     
+    <div id="loading-overlay" style="display: flex; flex-direction: column; justify-content: center; align-items: center; position: fixed; width: 100vw; height: 100vh; background-color: #161c22; top: 0; left: 0; z-index: 9999;">
+        <!-- Spinner Element -->
+        <div class="loading-spinner" style="width: 50px; height: 50px; border: 5px solid rgba(153, 170, 187, 0.2); border-top: 5px solid #edae49; border-radius: 50%; margin-bottom: 20px;"></div>
+        
+        <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px; color: #edae49;">Loading...</span>
+        <span style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; margin-top: 10px;">Please wait while some data is initialized.</span>
+    </div>
 
     
 

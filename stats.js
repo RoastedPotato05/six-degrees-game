@@ -110,7 +110,7 @@ export async function initStats() {
             display: flex;
             flex-direction: column;
             padding: 8px 10px;
-            border-bottom: 4px solid #161c22;
+            border-bottom: 2px solid #99AABB33;
             cursor: pointer;
             background-color: #202830;
             transition: background-color 0.1s ease-in-out;
@@ -195,7 +195,7 @@ export async function initStats() {
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
                 <button class="delete-run-btn primary-orange" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; background: #edae49; border-radius: 3px; border: none; cursor: pointer; font-size: 18px; color: #fff; padding: 4px; width: 36px; height: 36px;"><img src="images/trash.png" style="width: 30px; height: 30px;"></button>
-                <span class="dropdown-arrow" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #99AABB; display: inline-block; transform: scale(2, 1.5); user-select: none;">˅</span>
+                <span class="dropdown-arrow" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #99AABB; display: inline-block; transform: scale(1, 1); user-select: none;">⌵</span>
             </div>
         `;
 
@@ -301,11 +301,11 @@ export async function initStats() {
             if (isExpanded) {
                 detailsPreviewDiv.style.display = 'none';
                 expandedPathDiv.style.display = 'flex';
-                arrowSpan.textContent = '˄';
+                arrowSpan.style.transform = 'scale(1, -1)'; // Flip the arrow
             } else {
                 detailsPreviewDiv.style.display = 'flex';
                 expandedPathDiv.style.display = 'none';
-                arrowSpan.textContent = '˅';
+                arrowSpan.style.transform = 'scale(1, 1)'; // Reset the arrow
             }
         });
 

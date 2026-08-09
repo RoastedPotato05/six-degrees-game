@@ -15,97 +15,100 @@ let numRandomItems = 200;
 
 // fetch top 100 items for each and store the id and media type in the dict
 async function fetchRandomItems() {
-    
-    // Helper function to fetch pages dynamically until we collect 100 items after filtering
-    async function fetchUntil100(baseUrl, mediaType) {
-        let collectedItems = [];
-        let page = 1;
-        
-        while (collectedItems.length < numRandomItems && page <= 500) {
-            const response = await fetch(`${baseUrl}&page=${page}`);
-            const data = await response.json();
-            
-            if (!data.results || data.results.length === 0) break;
-            
-            let pageItems = data.results;
-            
-            
-            pageItems = pageItems.filter(item => item.original_language === 'en');
-            
-            
-            // Add items one by one until we hit 100
-            for (const item of pageItems) {
-                if (collectedItems.length < numRandomItems) {
-                    collectedItems.push({
-                        id: item.id,
-                        media_type: mediaType
-                    });
-                }
-            }
-            
-            page++;
-        }
-        
-        return collectedItems;
-    }
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) loadingOverlay.style.display = 'flex'; // Show custom loading screen
 
-    // 1. Fetch 100 English Movies
-    const movies = await fetchUntil100(
-        `https://api.themoviedb.org/3/discover/movie?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
-        'movie'
-    );
-
-    // 2. Fetch top actors organically by taking a limited slice of sorted cast per movie
-    let people = [];
-    const seenActorIds = new Set();
-    const TOP_ACTORS_PER_MOVIE = 5; // Adjust to 3 or 5 as preferred
-    
-    for (const movie of movies) {
-        if (people.length >= numRandomItems) break;
-        
-        try {
-            const response = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`);
-            const creditsData = await response.json();
+    try {
+        // Helper function to fetch pages dynamically until we collect 100 items after filtering
+        async function fetchUntil100(baseUrl, mediaType) {
+            let collectedItems = [];
+            let page = 1;
             
-            if (creditsData.cast) {
-                // Sort this movie's cast by popularity descending
-                const sortedCast = creditsData.cast.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+            while (collectedItems.length < numRandomItems && page <= 500) {
+                const response = await fetch(`${baseUrl}&page=${page}`);
+                const data = await response.json();
                 
-                let addedFromMovie = 0;
-                for (const actor of sortedCast) {
-                    if (addedFromMovie >= TOP_ACTORS_PER_MOVIE) break;
-                    if (people.length >= numRandomItems) break;
-                    
-                    if (!seenActorIds.has(actor.id) && (actor.popularity || 0) >= 1) {
-                        seenActorIds.add(actor.id);
-                        people.push({
-                            id: actor.id,
-                            media_type: 'person'
+                if (!data.results || data.results.length === 0) break;
+                
+                let pageItems = data.results;
+                pageItems = pageItems.filter(item => item.original_language === 'en');
+                
+                for (const item of pageItems) {
+                    if (collectedItems.length < numRandomItems) {
+                        collectedItems.push({
+                            id: item.id,
+                            media_type: mediaType
                         });
-                        addedFromMovie++;
                     }
                 }
+                page++;
             }
-        } catch (error) {
-            console.error(`Failed to fetch credits for movie ID ${movie.id}:`, error);
+            return collectedItems;
+        }
+
+        // 1. Fetch 100 English Movies
+        const movies = await fetchUntil100(
+            `https://api.themoviedb.org/3/discover/movie?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
+            'movie'
+        );
+
+        // 2. Fetch top actors organically by taking a limited slice of sorted cast per movie
+        let people = [];
+        const seenActorIds = new Set();
+        const TOP_ACTORS_PER_MOVIE = 5;
+        
+        for (const movie of movies) {
+            if (people.length >= numRandomItems) break;
+            
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`);
+                const creditsData = await response.json();
+                
+                if (creditsData.cast) {
+                    const sortedCast = creditsData.cast.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+                    
+                    let addedFromMovie = 0;
+                    for (const actor of sortedCast) {
+                        if (addedFromMovie >= TOP_ACTORS_PER_MOVIE) break;
+                        if (people.length >= numRandomItems) break;
+                        
+                        if (!seenActorIds.has(actor.id) && (actor.popularity || 0) >= 1) {
+                            seenActorIds.add(actor.id);
+                            people.push({
+                                id: actor.id,
+                                media_type: 'person'
+                            });
+                            addedFromMovie++;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to fetch credits for movie ID ${movie.id}:`, error);
+            }
+        }
+
+        // 3. Fetch 100 English TV Shows
+        const tv = await fetchUntil100(
+            `https://api.themoviedb.org/3/discover/tv?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
+            'tv'
+        );
+
+        // Store everything in a dictionary/object
+        const itemDict = {
+            movies: movies,
+            people: people,
+            tv: tv
+        };
+
+        console.log(`Successfully fetched ${numRandomItems} items per category:`, itemDict);
+        return itemDict;
+
+    } finally {
+        // Automatically hide only the custom loading overlay when done
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
     }
-
-    // 3. Fetch 100 English TV Shows
-    const tv = await fetchUntil100(
-        `https://api.themoviedb.org/3/discover/tv?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
-        'tv'
-    );
-
-    // Store everything in a dictionary/object
-    const itemDict = {
-        movies: movies,
-        people: people,
-        tv: tv
-    };
-
-    console.log(`Successfully fetched ${numRandomItems} items per category:`, itemDict);
-    return itemDict;
 }
 
 // if randomItems is not already fetched, fetch it
