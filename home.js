@@ -151,7 +151,7 @@ standardGoalInput.addEventListener('focus', (e) => {
 
 // --- Start Run Button Listener ---
 standardStartRunBtn.addEventListener('click', async () => {
-    currentMode = 'STANDARD';
+    window.currentMode = 'STANDARD';
 
     async function validateInput(inputElement) {
         const text = inputElement.value.trim();
@@ -224,90 +224,54 @@ standardStartRunBtn.addEventListener('click', async () => {
 });
 
 
-// upon clicking either randomize button, select a random item from randomItems dictionary, could be any of the three categories
-// then run the id and type through fetchDetails, then set the value to the title or name
-standardGoalRandomizeBtn.addEventListener('click', async () => {
-    const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
-    const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
-    if (localStorage.getItem('no-tv') === 'true' && item.media_type === 'tv') {
-        standardGoalRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('no-movies') === 'true' && item.media_type === 'movie') {
-        standardGoalRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined' && BANNED_MCU.some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardGoalRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardGoalRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('bannedItems') && JSON.parse(localStorage.getItem('bannedItems')).some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardGoalRandomizeBtn.click();
-        return;
-    }
+// Helper function to pick a valid random item and populate an input element
+async function randomizeInput(inputElement) {
+    while (true) {
+        const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
+        const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
+        
+        const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+        const noTv = mediaFilter === 'no-tv' || localStorage.getItem('no-tv') === 'true';
+        const noMovies = mediaFilter === 'no-movies' || localStorage.getItem('no-movies') === 'true';
 
-    await window.fetchDetails(item.id, item.media_type).then((details) => {
-        standardGoalInput.value = `${details.title || details.name}`;
-        inputData[standardGoalInput.id] = details;
-    });
+        if (noTv && item.media_type === 'tv') continue;
+        if (noMovies && item.media_type === 'movie') continue;
+
+        if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined' && BANNED_MCU.some(b => b.id === item.id && b.media_type === item.media_type)) {
+            continue;
+        }
+        if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
+            continue;
+        }
+        
+        const bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+        if (bannedItems.some(b => b.id === item.id && b.media_type === item.media_type)) {
+            continue;
+        }
+
+        // Fetch details and populate input + cache
+        const details = await window.fetchDetails(item.id, item.media_type);
+        inputElement.value = `${details.title || details.name}`;
+        inputData[inputElement.id] = details;
+        break;
+    }
+}
+
+
+// --- Randomize Button Listeners ---
+standardGoalRandomizeBtn.addEventListener('click', async () => {
+    await randomizeInput(standardGoalInput);
 });
 
 standardStartRandomizeBtn.addEventListener('click', async () => {
-    const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
-    const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
-    console.log('filter status:', localStorage.getItem('mediaFilter'));
-    
-
-    if (localStorage.getItem('mediaFilter') === 'no-tv' && item.media_type === 'tv') {
-        console.log('Randomized item is a TV show, but TV shows are disabled. Re-randomizing...');
-        standardStartRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('mediaFilter') === 'no-movies' && item.media_type === 'movie') {
-        console.log('Randomized item is a Movie, but Movies are disabled. Re-randomizing...');
-        standardStartRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined' && BANNED_MCU.some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardStartRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardStartRandomizeBtn.click();
-        return;
-    }
-    if (localStorage.getItem('bannedItems') && JSON.parse(localStorage.getItem('bannedItems')).some(b => b.id === item.id && b.media_type === item.media_type)) {
-        standardStartRandomizeBtn.click();
-        return;
-    }
-
-    await window.fetchDetails(item.id, item.media_type).then((details) => {
-        standardStartInput.value = `${details.title || details.name}`;
-        inputData[standardStartInput.id] = details;
-    });
+    await randomizeInput(standardStartInput);
 });
 
-
 standardRunRandomizeBtn.addEventListener('click', async () => {
-    // set value of each input to a random item from the randomItems dictionary and then run the start run pipeline
-    let category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
-    let item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
-    await window.fetchDetails(item.id, item.media_type).then((details) => {
-        standardStartInput.value = `${details.title || details.name}`;
-        inputData[standardStartInput.id] = details;
-    });
+    await randomizeInput(standardStartInput);
+    await randomizeInput(standardGoalInput);
 
-    category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
-    item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
-    await window.fetchDetails(item.id, item.media_type).then((details) => {
-        standardGoalInput.value = `${details.title || details.name}`;
-        inputData[standardGoalInput.id] = details;
-    });
-
+    // Now that both inputs and their caches are fully populated, trigger the start run
     standardStartRunBtn.click();
 });
 
@@ -319,3 +283,9 @@ settingsBtn.addEventListener('click', () => {
 statsBtn.addEventListener('click', () => {
     window.switchView('view-stats');
 });
+
+window.startRandomRun = async () => {
+    await randomizeInput(standardStartInput);
+    await randomizeInput(standardGoalInput);
+    standardStartRunBtn.click();
+};

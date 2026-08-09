@@ -980,8 +980,8 @@ function displaySearchResults(searchResults) {
         }
 
         const imgHtml = imagePath 
-            ? `<img src="https://image.tmdb.org/t/p/w92${imagePath}" style="width: 56px; height: 80px; object-fit: cover; border-radius: 2px; margin-right: 10px;" />` 
-            : `<div style="width: 56px; height: 80px; background: #2c3844; border-radius: 2px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; color: #99AABB;">N/A</div>`;
+            ? `<img src="https://image.tmdb.org/t/p/w92${imagePath}" style="width: 56px; height: 84px; object-fit: cover; border-radius: 2px; margin-right: 10px;" />` 
+            : `<div style="width: 56px; height: 84px; background: #2c3844; border-radius: 2px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; color: #99AABB;">N/A</div>`;
 
         li.innerHTML = `
             <div style="display: flex; align-items: center; overflow: hidden;">
@@ -1191,12 +1191,14 @@ function switchView(viewId, params = {}) {
     document.querySelectorAll('.app-view').forEach(view => {
         view.style.display = 'none';
     });
+    document.getElementById('save-text').innerText = 'Save';
 
     reset();
 
     const timerSection = document.getElementById('footer-timer-section');
     const settingsSection = document.getElementById('footer-settings-section');
     const statsSection = document.getElementById('footer-stats-section');
+
     
     document.getElementById('timer-return-btn').style.display = 'none';
     
@@ -1222,6 +1224,7 @@ function switchView(viewId, params = {}) {
         } else if (viewId === 'view-settings' && typeof window.initSettings === 'function') {
             window.initSettings();
         } else if (viewId === 'view-standard' && typeof window.initStandard === 'function') {
+            window.currentMode = 'STANDARD';
             window.initStandard(params.start, params.goal);
         }else if (viewId === 'view-stats' && typeof window.initStats === 'function') {
             window.initStats();
@@ -1327,6 +1330,20 @@ localStorage.setItem('stats', JSON.stringify(stats));
 
 
 
+export function msToTime(ms) {
+    ms = Math.round(ms); // Round to nearest millisecond
+    let minutes = Math.floor(ms / 60000);
+    let seconds = Math.floor((ms % 60000) / 1000);
+    let milliseconds = ms % 1000;
+
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+    milliseconds = milliseconds < 100 ? (milliseconds < 10 ? "00" + milliseconds : "0" + milliseconds) : milliseconds;
+
+    return `${minutes}:${seconds}.${milliseconds}`;
+}
+
+
 
 
 
@@ -1344,6 +1361,7 @@ window.updateDisplay = updateDisplay;
 window.switchView = switchView;
 window.showInputError = showInputError;
 window.playSoundEffect = playSoundEffect;
+window.msToTime = msToTime;
 
 window.TMDB_API_KEY = TMDB_API_KEY;
 window.BASE_URL = BASE_URL;

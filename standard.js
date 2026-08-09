@@ -8,6 +8,13 @@ const targetName = document.getElementById('target-name');
 const targetInfo = document.getElementById('target-info');
 const itemSearch = document.getElementById('item-search');
 const timerReturnBtn = document.getElementById('timer-return-btn');
+const targetDivText = document.getElementById('target-div-text');
+const targetDiv = document.getElementById('target-div');
+const victoryReturnBtn = document.getElementById('victory-return-btn');
+const victoryRandomizeBtn = document.getElementById('victory-randomize-btn');
+const victorySaveBtn = document.getElementById('victory-save-btn');
+const victoryShareBtn = document.getElementById('victory-share-btn');
+const victoryDiv = document.getElementById('victory-div');
 
 // Ensure list container maintains the wrap layout and scrolling properties
 nameMovieList.style.display = 'flex';
@@ -21,13 +28,17 @@ nameMovieList.style.overflowY = 'auto';
 let path = [];
 let startData;
 let goalData;
+let isRunCompleted = false;
 
 export async function initStandard(startDataParam, goalDataParam) {
     path = [];
+    isRunCompleted = false;
     if (window.reset) window.reset();
     if (window.start) window.start();
     if (pathContainer) pathContainer.innerHTML = '';
     if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+    if (victoryDiv) victoryDiv.style.display = 'none';
+    if (targetDiv) targetDiv.style.display = 'flex';
 
     startData = startDataParam;
     goalData = goalDataParam;
@@ -55,14 +66,14 @@ export async function initStandard(startDataParam, goalDataParam) {
         const targetPosterPath = goalData.poster_path || goalData.profile_path;
         if (targetPosterPath) {
             if (goalData.imageUrl) {
-                targetPoster.innerHTML = `<img src="${goalData.imageUrl}" style="width: 60%; height: auto; aspect-ratio: 56 / 80; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+                targetPoster.innerHTML = `<img src="${goalData.imageUrl}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
             } else {
-                targetPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${targetPosterPath}" style="width: 60%; height: auto; aspect-ratio: 56 / 80; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+                targetPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${targetPosterPath}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
             }
         } else {
-            targetPoster.innerHTML = `<svg viewBox="0 0 56 80" style="width: 60%; height: auto; align-self: flex-start; border-radius: 2px;">
-                <rect width="56" height="80" fill="#2c3844" rx="2"></rect>
-                <text x="28" y="43" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
+            targetPoster.innerHTML = `<svg viewBox="0 0 56 84" style="width: 60%; height: auto; align-self: flex-start; border-radius: 2px;">
+                <rect width="56" height="84" fill="#2c3844" rx="2"></rect>
+                <text x="28" y="42" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
             </svg>`;
         }
 
@@ -114,6 +125,39 @@ export async function initStandard(startDataParam, goalDataParam) {
             }
             
             rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+            // filter out banned items from rawItems
+            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_MCU);
+            }
+
+            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_BIG_3);
+            }
+
+            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+
+            rawItems = rawItems.filter(item => {
+                const itemType = item.media_type || 'movie';
+
+                // Check specific ban lists (user banned items, MCU, Big 3)
+                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
+                    return false;
+                }
+
+                // Check broad media filters from settings
+                if (mediaFilter === 'no-tv' && itemType === 'tv') {
+                    return false;
+                }
+                if (mediaFilter === 'no-movies' && itemType === 'movie') {
+                    return false;
+                }
+
+                return true;
+            });
+
             const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
             const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
 
@@ -198,14 +242,14 @@ async function loadStep(id, type) {                         // function for upda
     // --- 1. Render Poster ---
     const posterPath = data.poster_path || data.profile_path;
     if (data.imageUrl) {
-        currentPoster.innerHTML = `<img src="${data.imageUrl}" style="width: 100%; height: auto; aspect-ratio: 56 / 80; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+        currentPoster.innerHTML = `<img src="${data.imageUrl}" style="width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
     }
     else if (posterPath) {
-        currentPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${posterPath}" style="width: 100%; height: auto; aspect-ratio: 56 / 80; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+        currentPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${posterPath}" style="width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
     } else {
-        currentPoster.innerHTML = `<svg viewBox="0 0 56 80" style="width: 100%; height: auto; align-self: flex-start; border-radius: 2px;">
-            <rect width="56" height="80" fill="#2c3844" rx="2"></rect>
-            <text x="28" y="43" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
+        currentPoster.innerHTML = `<svg viewBox="0 0 56 84" style="width: 100%; height: auto; align-self: flex-start; border-radius: 2px;">
+            <rect width="56" height="84" fill="#2c3844" rx="2"></rect>
+            <text x="28" y="42" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
         </svg>`;
     }
 
@@ -276,57 +320,59 @@ async function loadStep(id, type) {                         // function for upda
         subText: subText
     };
 
-    if (path.some(item => item.id === newItem.id && item.media_type === newItem.media_type)) {
-        const index = path.findIndex(item => item.id === newItem.id && item.media_type === newItem.media_type);
-        path = path.slice(0, index + 1);
-    } else {
-        path.push(newItem);
-    }
-
-    pathContainer.innerHTML = '';
-    pathContainer.style.display = 'flex';
-    pathContainer.style.flexDirection = 'column';
-    pathContainer.style.alignItems = 'center';
-    pathContainer.style.width = '100%';
-    pathContainer.style.boxSizing = 'border-box';
-    pathContainer.style.gap = '6px';
-
-    path.forEach((pathItem, idx) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'path-item';
-        
-
-        const imgHtml = pathItem.imagePath 
-            ? `<img src="${pathItem.imagePath}" style="width: 56px; height: 80px; object-fit: cover; border-radius: 2px; margin-right: 10px;" />` 
-            : `<div style="width: 56px; height: 80px; background: #2c3844; border-radius: 2px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #99AABB;">N/A</div>`;
-
-        itemDiv.innerHTML = `
-            <div style="display: flex; align-items: center; overflow: hidden;">
-                ${imgHtml}
-                <div style="overflow: hidden;">
-                    <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f8f8f8; font-size: 22px;">${pathItem.name}</div>
-                    <div style="font-size: 16px; font-weight: 400; color: #99AABB;">${pathItem.subText}</div>
-                </div>
-            </div>
-            <span class="search-result-type" style="font-size: 16px; font-weight: 400;">${pathItem.media_type}</span>
-        `;
-
-        itemDiv.addEventListener('click', () => {
-            loadStep(pathItem.id, pathItem.media_type);
-        });
-
-        pathContainer.appendChild(itemDiv);
-
-        if (idx < path.length - 1) {
-            const arrow = document.createElement('div');
-            arrow.innerHTML = '↓';
-            arrow.style.color = '#99AABB';
-            arrow.style.fontSize = '20px';
-            arrow.style.margin = '2px 0';
-            arrow.style.textAlign = 'center';
-            pathContainer.appendChild(arrow);
+    if (!isRunCompleted) {
+        if (path.some(item => item.id === newItem.id && item.media_type === newItem.media_type)) {
+            const index = path.findIndex(item => item.id === newItem.id && item.media_type === newItem.media_type);
+            path = path.slice(0, index + 1);
+        } else {
+            path.push(newItem);
         }
-    });
+
+        pathContainer.innerHTML = '';
+        pathContainer.style.display = 'flex';
+        pathContainer.style.flexDirection = 'column';
+        pathContainer.style.alignItems = 'center';
+        pathContainer.style.width = '100%';
+        pathContainer.style.boxSizing = 'border-box';
+        pathContainer.style.gap = '6px';
+
+        path.forEach((pathItem, idx) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'path-item';
+            
+
+            const imgHtml = pathItem.imagePath 
+                ? `<img src="${pathItem.imagePath}" style="width: 56px; height: 84px; object-fit: cover; border-radius: 2px; margin-right: 10px;" />` 
+                : `<div style="width: 56px; height: 84px; background: #2c3844; border-radius: 2px; margin-right: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #99AABB;">N/A</div>`;
+
+            itemDiv.innerHTML = `
+                <div style="display: flex; align-items: center; overflow: hidden;">
+                    ${imgHtml}
+                    <div style="overflow: hidden;">
+                        <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f8f8f8; font-size: 22px;">${pathItem.name}</div>
+                        <div style="font-size: 16px; font-weight: 400; color: #99AABB;">${pathItem.subText}</div>
+                    </div>
+                </div>
+                <span class="search-result-type" style="font-size: 16px; font-weight: 400;">${pathItem.media_type}</span>
+            `;
+
+            itemDiv.addEventListener('click', () => {
+                loadStep(pathItem.id, pathItem.media_type);
+            });
+
+            pathContainer.appendChild(itemDiv);
+
+            if (idx < path.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.innerHTML = '↓';
+                arrow.style.color = '#99AABB';
+                arrow.style.fontSize = '20px';
+                arrow.style.margin = '2px 0';
+                arrow.style.textAlign = 'center';
+                pathContainer.appendChild(arrow);
+            }
+        });
+    }
 
 
     const renderTabContent = (items, isPersonTarget = false) => {
@@ -414,7 +460,7 @@ async function loadStep(id, type) {                         // function for upda
                     btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 10px; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
                 }
                 btn.style.width = '100px';
-                btn.style.aspectRatio = '56 / 80';
+                btn.style.aspectRatio = '2 / 3';
                 btn.style.padding = '0';
                 btn.style.overflow = 'hidden';
                 btn.style.display = 'flex';
@@ -767,22 +813,49 @@ async function loadStep(id, type) {                         // function for upda
 
     console.log('Data loaded:', data);
     console.log('Goal data:', goalData);
-    if ((data.id == goalData.id) && (data.media_type == goalData.media_type)) {
-        console.log('Goal data reached');
-        runComplete();
+    if (!isRunCompleted) {
+        if ((data.id == goalData.id) && (data.media_type == goalData.media_type)) {
+            console.log('Goal data reached');
+            runComplete();
+        }
     }
 
 }
 
 
 timerReturnBtn.addEventListener('click', () => {
+    const stats = JSON.parse(localStorage.getItem('stats')) || {};
+    stats.winStreak = 0;
+    localStorage.setItem('stats', JSON.stringify(stats));
     window.switchView('view-home');
 });
 
+victoryReturnBtn.addEventListener('click', () => {
+    window.switchView('view-home');
+});
 
+victoryRandomizeBtn.addEventListener('click', () => {
+    window.startRandomRun();
+});
+
+victorySaveBtn.addEventListener('click', () => {
+    const stats = JSON.parse(localStorage.getItem('stats')) || {};
+    stats.savedRuns = stats.savedRuns || [];
+    stats.savedRuns.push({
+        start: currentStartData,
+        goal: currentGoalData,
+        path: path,
+        time: window.difference,
+        gamemode: window.currentMode || 'STANDARD'
+    });
+    localStorage.setItem('stats', JSON.stringify(stats));
+    console.log('Run saved to stats.savedRuns');
+    document.getElementById('save-text').innerText = 'Saved!';
+});
 
 function runComplete() {
 
+    isRunCompleted = true;
     window.playSoundEffect('fnaf.mp3');
     window.playSoundEffect('happy_wheels.mp3');
     window.stop();
@@ -836,6 +909,13 @@ function runComplete() {
     }
 
     localStorage.setItem('stats', JSON.stringify(stats));
+
+
+    // hide target info and replace with victory buttons
+    targetDivText.innerText = 'EXIT';
+    targetDiv.style.display = 'none';
+    timerReturnBtn.style.display = 'none';
+    victoryDiv.style.display = 'flex';
 
 
     
