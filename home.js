@@ -246,7 +246,14 @@ async function randomizeInput(inputElement) {
         if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
             continue;
         }
-        
+
+        // ensure the start and goal are not the same item
+        const otherInputElement = inputElement === standardStartInput ? standardGoalInput : standardStartInput;
+        const otherData = inputData[otherInputElement.id];
+        if (otherData && otherData.id === item.id && otherData.media_type === item.media_type) {
+            continue;
+        }
+
         const bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
         if (bannedItems.some(b => b.id === item.id && b.media_type === item.media_type)) {
             continue;

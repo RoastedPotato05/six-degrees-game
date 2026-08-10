@@ -289,11 +289,12 @@
     <!-- standard mode screen -->
     <div id="view-standard" class="app-view" style="display: none; flex-direction: column; height: calc(100vh - 220px); min-height: 0;">
         <div style="display: flex; width: 100%; flex: 1; min-height: 0;">
-            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
+            <div style="margin: 0; width: 20%; flex: 0 0 20%; min-height: 0; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
                 <div style="display: flex; text-align: center; padding: 10px;">
                     <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px; " class="text-blue">PATH</span>
                 </div>
-                <div id="path-container" style="display: flex; border: 2px solid #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600;"></div>
+                <div id="path-container" style="display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; border: 2px solid #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; width: 100%; box-sizing: border-box;"></div>
+                <button id="undo-btn" style="flex-shrink: 0; margin-top: 10px; width: 100%; height: 50px; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 24px;" class="primary-blue">Undo</button>
             </div>
 
             <div style="border-left: 4px solid #161c22; border-right: 4px solid #161c22; margin: 0 0px; width: 60%; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 20px 20px 0px 20px; box-sizing: border-box;">
@@ -325,20 +326,25 @@
                 </div>
             </div>
 
-            <div style="margin: 0; width: 20%; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; gap: 10px;">
+            <div style="margin: 0; width: 20%; flex: 0 0 20%; min-height: 0; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; gap: 10px;">
+                <!-- Header stays fixed at the top -->
                 <div style="display: flex; text-align: center; padding: 10px; margin-bottom: 10px;">
-                    <span id="target-div-text" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px; " class="text-purple">TARGET</span>
+                    <span id="target-div-text" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;" class="text-purple">TARGET</span>
                 </div>
-                <div id="target-div" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div id="target-poster" style="justify-content: center; align-items: center; display: flex; margin-bottom: 0px;"></div>
-                    <div id="target-name" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 20px; text-align: center;"></div>
-                    <div id="target-info" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; text-align: center; padding: 10px;"></div>
-                </div>
-                <div id="victory-div" style="display: flex; flex-direction: column; gap: 20px;">
-                    <button id="victory-return-btn" style=" height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange"><span style="position: relative; top: -5px;">Return</span></button>
-                    <button id="victory-randomize-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-purple"><img src="images/dice.png" style="width: 60px; height: 60px; position: relative; top: 3px;"></button>
-                    <button id="victory-save-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-green"><span id="save-text" style="position: relative; top: -5px;">Save</span></button>
-                    <button id="victory-share-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-blue"><span style="position: relative; top: -5px;">Share</span></button>
+
+                <!-- New scrollable wrapper for target and victory sections -->
+                <div style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; flex: 1; box-sizing: border-box;">
+                    <div id="target-div" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div id="target-poster" style="justify-content: center; align-items: center; display: flex; margin-bottom: 0px;"></div>
+                        <div id="target-name" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 20px; text-align: center;"></div>
+                        <div id="target-info" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; text-align: center; padding: 10px;"></div>
+                    </div>
+                    <div id="victory-div" style="display: flex; flex-direction: column; gap: 20px;">
+                        <button id="victory-return-btn" style=" height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange"><span style="position: relative; top: -5px;">Return</span></button>
+                        <button id="victory-randomize-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-purple"><img src="images/dice.png" style="width: 60px; height: 60px; position: relative; top: 3px;"></button>
+                        <button id="victory-save-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-green"><span id="save-text" style="position: relative; top: -5px;">Save</span></button>
+                        <button id="victory-share-btn" style="height: 80px; width: 100%; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-blue"><span style="position: relative; top: -5px;">Share</span></button>
+                    </div>
                 </div>
             </div>
         </div>

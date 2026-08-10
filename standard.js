@@ -3,6 +3,7 @@ const currentPoster = document.getElementById('current-poster');
 const castDepartments = document.getElementById('cast/departments');
 const nameMovieList = document.getElementById('name/movie-list');
 const pathContainer = document.getElementById('path-container');
+const undoBtn = document.getElementById('undo-btn');
 const targetPoster = document.getElementById('target-poster');
 const targetName = document.getElementById('target-name');
 const targetInfo = document.getElementById('target-info');
@@ -26,12 +27,14 @@ nameMovieList.style.minHeight = '0';
 nameMovieList.style.overflowY = 'auto';
 
 let path = [];
+let historyStack = [];
 let startData;
 let goalData;
 let isRunCompleted = false;
 
 export async function initStandard(startDataParam, goalDataParam) {
     path = [];
+    historyStack = [];
     isRunCompleted = false;
     if (window.reset) window.reset();
     if (window.start) window.start();
@@ -357,6 +360,7 @@ async function loadStep(id, type) {                         // function for upda
             `;
 
             itemDiv.addEventListener('click', () => {
+                saveStateToHistory();
                 loadStep(pathItem.id, pathItem.media_type);
             });
 
@@ -480,6 +484,7 @@ async function loadStep(id, type) {                         // function for upda
             
             const targetType = isPersonTarget ? 'person' : (item.media_type || 'movie');
             btn.addEventListener('click', () => {
+                saveStateToHistory();
                 loadStep(item.id, targetType);
             });
             nameMovieList.appendChild(btn);
@@ -600,6 +605,7 @@ async function loadStep(id, type) {                         // function for upda
                 btn.style.fontSize = '16px';
 
                 btn.addEventListener('click', () => {
+                    saveStateToHistory();
                     loadStep(item.id, 'person');
                 });
                 btnWrap.appendChild(btn);
@@ -920,3 +926,39 @@ function runComplete() {
 
     
 }
+
+
+function saveStateToHistory() {
+    const currentState = {
+        path: path,
+        isCompleted: isRunCompleted
+        // Add any other active game variables here if needed
+    };
+    historyStack.push(structuredClone(currentState));
+}
+
+undoBtn.addEventListener('click', async () => {
+    // Ensure there is a previous state to revert to
+    if (historyStack.length > 0) {
+        // Pop the last saved state off the stack
+        const previousState = historyStack.pop();
+        
+        // Restore state variables
+        path = previousState.path;
+        isRunCompleted = previousState.isCompleted;
+
+        // Handle UI updates if reverting from a completed victory state
+        if (!isRunCompleted) {
+            if (targetDiv) targetDiv.style.display = 'flex';
+            if (victoryDiv) victoryDiv.style.display = 'none';
+            if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+            if (targetDivText) targetDivText.innerText = 'TARGET';
+        }
+
+        // Reload the view for the current active step in the restored path
+        const currentStep = path[path.length - 1];
+        if (currentStep) {
+            await loadStep(currentStep.id, currentStep.media_type);
+        }
+    }
+});
