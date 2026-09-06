@@ -803,11 +803,11 @@ if (!bgMusic) {
     bgMusic = new Audio('sounds/background.mp3');
     bgMusic.loop = true;
     
-    // Calculate volume safely
+    // Fall back to 0 (or your preferred default) instead of 0.5/1.0 if not set
     const musicVol = localStorage.getItem('musicVolume');
     const masterVol = localStorage.getItem('masterVolume');
-    const mVal = musicVol !== null ? parseFloat(musicVol) : 0.5;
-    const maVal = masterVol !== null ? parseFloat(masterVol) : 1.0;
+    const mVal = musicVol !== null ? parseFloat(musicVol) : 0.5; 
+    const maVal = masterVol !== null ? parseFloat(masterVol) : 0; // Changed default fallback to 0
     bgMusic.volume = Math.min(1, Math.max(0, mVal * maVal));
     console.log("Audio initialized. Volume:", bgMusic.volume);
 
