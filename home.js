@@ -6,9 +6,13 @@ const standardStartRandomizeBtn = document.getElementById('standard-start-random
 const standardRunRandomizeBtn = document.getElementById('standard-run-randomize-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const statsBtn = document.getElementById('stats-btn');
+const navLeft = document.getElementById('nav-left');
+const navRight = document.getElementById('nav-right');
+const homeMenuGamemodeText = document.getElementById('home-menu-gamemode-text');
 
 let randomItems = null;
 let numRandomItems = 200;
+
 
 
 
@@ -299,3 +303,8 @@ window.startRandomRun = async () => {
     await randomizeInput(standardGoalInput);
     standardStartRunBtn.click();
 };
+
+
+navLeft.addEventListener('click', () => {
+    homeMenuGamemodeText.textContent = "test";
+}); 
