@@ -843,7 +843,7 @@ function playSoundEffect(filename) {
     const masterVol = localStorage.getItem('masterVolume');
     const sfxVol = localStorage.getItem('sfxVolume');
     
-    const maVal = masterVol !== null ? parseFloat(masterVol) : 1.0;
+    const maVal = masterVol !== null ? parseFloat(masterVol) : 0;
     const sVal = sfxVol !== null ? parseFloat(sfxVol) : 0.5;
     
     // Apply combined volume scaling
@@ -1383,6 +1383,7 @@ window.startTime = startTime;
 window.tInterval = tInterval;
 window.difference = difference;
 window.updatedTime = updatedTime;
+window.gamemodes = gamemodes;
 
 
 
