@@ -800,7 +800,8 @@ let gamemodes = ["STANDARD", "DETOUR", "ENDLESS"];
 
 let bgMusic = window.bgMusic;
 if (!bgMusic) {
-    bgMusic = new Audio('sounds/background.mp3');
+    const audioUrl = new URL('sounds/background.mp3', window.location.href).href;
+    bgMusic = new Audio(audioUrl);
     bgMusic.loop = true;
     
     // Fall back to 0 (or your preferred default) instead of 0.5/1.0 if not set
