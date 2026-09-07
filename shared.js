@@ -787,19 +787,20 @@ const BANNED_BIG_3 = [
 let debounceTimer;
 let searchResults = [];
 let inputData = {};
-let currentMode;
+let currentMode = "STANDARD";
 let currentStartData;
 let currentGoalData;
 let startTime = 0;
 let tInterval = null;
 let difference = 0;
 let updatedTime = 0;
+let gamemodes = ["STANDARD", "DETOUR", "ENDLESS"];
 
 
 
 let bgMusic = window.bgMusic;
 if (!bgMusic) {
-    bgMusic = new Audio('sounds/background.mp3');
+    bgMusic = new Audio('/sounds/background.mp3');
     bgMusic.loop = true;
     
     // Fall back to 0 (or your preferred default) instead of 0.5/1.0 if not set
@@ -811,7 +812,7 @@ if (!bgMusic) {
     console.log("Audio initialized. Volume:", bgMusic.volume);
 
     bgMusic.onerror = (e) => {
-        console.error("Audio error: Could not load 'sounds/balatro.mp3'.", e);
+        console.error("Audio error: Could not load 'sounds/background.mp3'.", e);
     };
 
     
@@ -1226,7 +1227,9 @@ function switchView(viewId, params = {}) {
         } else if (viewId === 'view-standard' && typeof window.initStandard === 'function') {
             window.currentMode = 'STANDARD';
             window.initStandard(params.start, params.goal);
-        }else if (viewId === 'view-stats' && typeof window.initStats === 'function') {
+        } else if (viewId === 'view-detours' && typeof window.initDetours === 'function') {
+            window.initDetours();
+        } else if (viewId === 'view-stats' && typeof window.initStats === 'function') {
             window.initStats();
         }
     }
@@ -1350,6 +1353,7 @@ export function msToTime(ms) {
 
 
 
+
 // At the bottom of shared.js
 window.fetchDetails = fetchDetails;
 window.executeSearch = executeSearch;
@@ -1371,6 +1375,7 @@ window.BANNED_BIG_3 = BANNED_BIG_3;
 window.debounceTimer = debounceTimer;
 window.searchResults = searchResults;
 window.inputData = inputData;
+window.gamemodes = gamemodes;
 window.currentMode = currentMode;
 window.currentStartData = currentStartData;
 window.currentGoalData = currentGoalData;

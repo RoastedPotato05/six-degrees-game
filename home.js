@@ -6,7 +6,20 @@ const standardStartRandomizeBtn = document.getElementById('standard-start-random
 const standardRunRandomizeBtn = document.getElementById('standard-run-randomize-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const statsBtn = document.getElementById('stats-btn');
+const navLeft = document.getElementById('nav-left');
+const navRight = document.getElementById('nav-right');
+const homeMenuGamemodeText = document.getElementById('home-menu-gamemode-text');
+const detourStartInput = document.getElementById('detour-search-start');
+const detourGoalInput = document.getElementById('detour-search-goal');
+const detourStartRunBtn = document.getElementById('detour-start-run-btn');
+const detourStartRandomizeBtn = document.getElementById('detour-start-randomize-btn');
+const detourGoalRandomizeBtn = document.getElementById('detour-goal-randomize-btn');
+const detourRunRandomizeBtn = document.getElementById('detour-run-randomize-btn');
+const detourContainersWrapper = document.getElementById('detour-search-containers-wrapper');
 
+
+
+let detourCounter = 1; // Tracks unique IDs for detour rows
 let randomItems = null;
 let numRandomItems = 200;
 
@@ -299,3 +312,265 @@ window.startRandomRun = async () => {
     await randomizeInput(standardGoalInput);
     standardStartRunBtn.click();
 };
+
+
+navLeft.addEventListener('click', () => {
+    const currentIndex = gamemodes.indexOf(currentMode);
+    const newIndex = (currentIndex - 1 + gamemodes.length) % gamemodes.length;
+    currentMode = gamemodes[newIndex];
+    homeScreen(currentMode);
+});
+
+navRight.addEventListener('click', () => {
+    const currentIndex = gamemodes.indexOf(currentMode);
+    const newIndex = (currentIndex + 1) % gamemodes.length;
+    currentMode = gamemodes[newIndex];
+    homeScreen(currentMode);
+});
+
+
+function homeScreen(gamemode) {
+    homeMenuGamemodeText.textContent = gamemode;
+
+    if (gamemode === "STANDARD") {
+        console.log("switching to standard home screen");
+        homeMenuGamemodeText.style.color = "#edae49";
+
+        document.getElementById('standard-inputs-container').style.display = 'flex';
+        document.getElementById('detour-inputs-container').style.display = 'none';
+        // document.getElementById('endless-inputs-container').style.display = 'none';
+
+        document.getElementById('standard-start-run-btn').style.display = 'flex';
+        document.getElementById('detour-start-run-btn').style.display = 'none';
+        // document.getElementById('endless-start-run-btn').style.display = 'none';
+    }
+    else if (gamemode === "DETOUR") {
+        console.log("switching to detour home screen");
+        homeMenuGamemodeText.style.color = "#659157";
+
+        document.getElementById('standard-inputs-container').style.display = 'none';
+        document.getElementById('detour-inputs-container').style.display = 'flex';
+        // document.getElementById('endless-inputs-container').style.display = 'none';
+
+        document.getElementById('standard-start-run-btn').style.display = 'none';
+        document.getElementById('detour-start-run-btn').style.display = 'flex';
+        // document.getElementById('endless-start-run-btn').style.display = 'none';
+    }
+    else if (gamemode === "ENDLESS") {
+        console.log("switching to endless home screen");
+        homeMenuGamemodeText.style.color = "#884e88";
+
+        document.getElementById('standard-inputs-container').style.display = 'none';
+        document.getElementById('detour-inputs-container').style.display = 'none';
+        // document.getElementById('endless-inputs-container').style.display = 'flex';
+
+        document.getElementById('standard-start-run-btn').style.display = 'none';
+        document.getElementById('detour-start-run-btn').style.display = 'none';
+        // document.getElementById('endless-start-run-btn').style.display = 'flex';
+    }
+}
+
+
+// --- Detour Start Input Listeners ---
+detourStartInput.addEventListener('input', (e) => {
+    delete inputData[e.target.id];
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => executeSearch(e.target), 500);
+});
+
+detourStartInput.addEventListener('focus', (e) => {
+    if (e.target.value.trim()) {
+        window.executeSearch(e.target);
+    }
+});
+
+// --- Detour Goal Input Listeners ---
+detourGoalInput.addEventListener('input', (e) => {
+    delete inputData[e.target.id];
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => executeSearch(e.target), 500);
+});
+
+detourGoalInput.addEventListener('focus', (e) => {
+    if (e.target.value.trim()) {
+        window.executeSearch(e.target);
+    }
+});
+
+
+// Helper to attach listeners to any detour row (initial or dynamically added)
+function attachDetourRowListeners(rowId) {
+    const input = document.getElementById(`detour-search-${rowId}`);
+    const randomizeBtn = document.getElementById(`detour-randomize-${rowId}`);
+    const actionBtn = document.getElementById(`detour-add-btn-${rowId}`);
+
+    // Input listeners
+    input.addEventListener('input', (e) => {
+        delete inputData[e.target.id];
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => executeSearch(e.target), 500);
+    });
+
+    input.addEventListener('focus', (e) => {
+        if (e.target.value.trim()) {
+            window.executeSearch(e.target);
+        }
+    });
+
+    // Randomize button listener for this specific detour
+    randomizeBtn.addEventListener('click', async () => {
+        await randomizeInput(input);
+    });
+
+    // Action (+ / -) button listener
+    actionBtn.addEventListener('click', () => {
+        if (actionBtn.classList.contains('detour-remove-btn')) {
+            // Remove this row
+            const row = actionBtn.closest('.detour-search-row');
+            delete inputData[input.id];
+            row.remove();
+        } else {
+            // Add a new row below
+            detourCounter++;
+            const newRowId = detourCounter;
+
+            // Turn current row's button into a minus (-) remove button
+            actionBtn.textContent = '-';
+            actionBtn.classList.remove('primary-green', 'detour-action-btn');
+            actionBtn.classList.add('primary-orange', 'detour-remove-btn');
+
+            // Create new row HTML
+            const newRow = document.createElement('div');
+            newRow.className = 'detour-search-row';
+            newRow.style.cssText = 'display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;';
+            newRow.innerHTML = `
+                <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
+                    <input id="detour-search-${newRowId}" placeholder="Search for a detour item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                    <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                </div>
+                <button id="detour-randomize-${newRowId}" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                    <img src="images/dice.png" style="width: 28px; height: 28px;">
+                </button>
+                <button id="detour-add-btn-${newRowId}" class="flex-child primary-green detour-action-btn" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 24px; font-weight: 600; color: #f8f8f8; cursor: pointer;">+</button>
+            `;
+
+            detourContainersWrapper.appendChild(newRow);
+            attachDetourRowListeners(newRowId);
+        }
+    });
+}
+
+// Initialize the first hardcoded detour row on startup
+attachDetourRowListeners(1);
+
+
+// --- Detour Randomize Button Listeners ---
+detourStartRandomizeBtn.addEventListener('click', async () => {
+    await randomizeInput(detourStartInput);
+});
+
+detourGoalRandomizeBtn.addEventListener('click', async () => {
+    await randomizeInput(detourGoalInput);
+});
+
+detourRunRandomizeBtn.addEventListener('click', async () => {
+    await randomizeInput(detourStartInput);
+    await randomizeInput(detourGoalInput);
+
+    // Randomize all active detour inputs dynamically
+    const allDetourInputs = detourContainersWrapper.querySelectorAll('input');
+    for (const input of allDetourInputs) {
+        await randomizeInput(input);
+    }
+
+    detourStartRunBtn.click();
+});
+
+// --- Detour Start Run Button Listener ---
+detourStartRunBtn.addEventListener('click', async () => {
+    window.currentMode = 'DETOUR';
+    console.log('Starting detour run...');
+
+    async function validateInput(inputElement) {
+        const text = inputElement.value.trim();
+        
+        // 1. Check for empty input
+        if (!text) {
+            window.showInputError(inputElement, 'Please enter an item!');
+            return null;
+        }
+
+        // 2. Get data from cache or auto-resolve top result
+        let data = inputData[inputElement.id];
+        if (!data) {
+            console.log(`No dropdown selection for [${inputElement.id}]. Auto-resolving top result for: "${text}"`);
+            data = await window.resolveInputData(inputElement);
+            
+            // 3. Check if search resolution failed (no results)
+            if (!data) {
+                window.showInputError(inputElement, 'No results found!');
+                return null;
+            }
+        }
+
+        // 4. Check media type filters
+        const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+        if (mediaFilter === 'no-tv' && data.media_type === 'tv') {
+            window.showInputError(inputElement, 'TV shows are disabled in settings!');
+            return null;
+        }
+        if (mediaFilter === 'no-movies' && data.media_type === 'movie') {
+            window.showInputError(inputElement, 'Movies are disabled in settings!');
+            return null;
+        }
+
+        // 5. Check banned items, MCU, and Big 3 filters
+        let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+        if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_MCU);
+        }
+
+        if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_BIG_3);
+        }
+
+        const isBanned = bannedItems.some(b => b.id === data.id && b.media_type === data.media_type);
+        if (isBanned) {
+            window.showInputError(inputElement, 'This item is banned! (Check your settings)');
+            return null;
+        }
+
+        return data;
+    }
+
+    // Collect all active detour inputs from the wrapper
+    const detourInputElements = Array.from(detourContainersWrapper.querySelectorAll('input'));
+
+    // Validate start, goal, and all detours concurrently
+    const validationPromises = [
+        validateInput(detourStartInput),
+        validateInput(detourGoalInput),
+        ...detourInputElements.map(input => validateInput(input))
+    ];
+
+    const results = await Promise.all(validationPromises);
+    const startResult = results[0];
+    const goalResult = results[1];
+    const detourResults = results.slice(2);
+
+    // If any required field or detour fails validation, halt execution
+    if (!startResult || !goalResult || detourResults.some(res => !res)) {
+        return;
+    }
+
+    currentStartData = startResult;
+    currentGoalData = goalResult;
+    const currentDetoursData = detourResults;
+
+    window.switchView('view-detour', { 
+        start: currentStartData, 
+        goal: currentGoalData, 
+        detours: currentDetoursData 
+    });
+});

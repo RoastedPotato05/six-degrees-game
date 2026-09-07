@@ -32,6 +32,161 @@ let startData;
 let goalData;
 let isRunCompleted = false;
 
+export async function initDetour(startDataParam, goalDataParam, detoursDataParam) {
+    path = [];
+    historyStack = [];
+    isRunCompleted = false;
+    if (window.reset) window.reset();
+    if (window.start) window.start();
+    if (pathContainer) pathContainer.innerHTML = '';
+    if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+    if (victoryDiv) victoryDiv.style.display = 'none';
+    if (targetDiv) targetDiv.style.display = 'flex';
+
+    startData = startDataParam;
+    goalData = goalDataParam;
+
+    // Handle detours data if needed
+    const detoursData = detoursDataParam || [];
+
+    if (!goalData) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const goalParam = urlParams.get('goal');
+        const goalDataArray = goalParam ? goalParam.split(',') : [];
+        if (goalDataArray.length === 2) {
+            goalData = await window.fetchDetails(goalDataArray[0], goalDataArray[1]);
+        }
+    }
+
+    if (!startData) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const startParam = urlParams.get('start');
+        const startDataArray = startParam ? startParam.split(',') : [];
+        if (startDataArray.length === 2) {
+            startData = await window.fetchDetails(startDataArray[0], startDataArray[1]);
+        }
+    }
+
+    if (goalData) {
+        // Render the target poster
+        const targetPosterPath = goalData.poster_path || goalData.profile_path;
+        if (targetPosterPath) {
+            if (goalData.imageUrl) {
+                targetPoster.innerHTML = `<img src="${goalData.imageUrl}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+            } else {
+                targetPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${targetPosterPath}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+            }
+        } else {
+            targetPoster.innerHTML = `<svg viewBox="0 0 56 84" style="width: 60%; height: auto; align-self: flex-start; border-radius: 2px;">
+                <rect width="56" height="84" fill="#2c3844" rx="2"></rect>
+                <text x="28" y="42" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
+            </svg>`;
+        }
+
+        // Render the target name
+        targetName.innerText = goalData.title || goalData.name;
+
+        // Render the target info
+        const goalType = goalData.media_type;
+        if (localStorage.getItem('target-name-only') === 'true') {
+            targetInfo.style.border = 'none';
+        }
+        else if (goalType === 'movie') {
+            const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
+            const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
+
+            const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${directorsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
+                </div>
+                <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'tv') {
+            const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'person') {
+            const dept = goalData.known_for_department || '';
+            let rawItems = [];
+            if (dept.toLowerCase() === 'acting') {
+                rawItems = goalData.credits?.cast || [];
+            } else {
+                rawItems = (goalData.credits?.crew || [])
+                    .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
+            }
+            
+            rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+            // filter out banned items from rawItems
+            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_MCU);
+            }
+
+            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_BIG_3);
+            }
+
+            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+
+            rawItems = rawItems.filter(item => {
+                const itemType = item.media_type || 'movie';
+
+                // Check specific ban lists (user banned items, MCU, Big 3)
+                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
+                    return false;
+                }
+
+                // Check broad media filters from settings
+                if (mediaFilter === 'no-tv' && itemType === 'tv') {
+                    return false;
+                }
+                if (mediaFilter === 'no-movies' && itemType === 'movie') {
+                    return false;
+                }
+
+                return true;
+            });
+
+            const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
+            const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topItemsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
+                </div>
+            `;
+        }
+    }
+
+    if (startData) {
+        await loadStep(startData.id, startData.media_type);
+    }
+
+    if (detoursData && detoursData.length > 0) {
+        console.log('Detours Data:', detoursData);
+    }
+
+}
+window.initDetour = initDetour;
+
 export async function initStandard(startDataParam, goalDataParam) {
     path = [];
     historyStack = [];
