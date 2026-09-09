@@ -1194,6 +1194,7 @@ function switchView(viewId, params = {}) {
         view.style.display = 'none';
     });
     document.getElementById('save-text').innerText = 'Save';
+    document.getElementById('share-text').innerText = 'Share';
 
     reset();
 

@@ -1117,3 +1117,14 @@ undoBtn.addEventListener('click', async () => {
         }
     }
 });
+
+victoryShareBtn.addEventListener('click', () => {
+    // copy the current path to clipboard in a readable format
+    const pathString = path.map(item => `${item.name}`).join(' → ');
+    navigator.clipboard.writeText(pathString);
+    // Update the share button text to indicate that the path has been copied
+    const shareText = document.getElementById('share-text');
+    if (shareText) {
+        shareText.innerText = 'Copied to clipboard!';
+    }
+});
