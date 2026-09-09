@@ -39,7 +39,7 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
     if (window.reset) window.reset();
     if (window.start) window.start();
     if (pathContainer) pathContainer.innerHTML = '';
-    if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+    if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
 
@@ -194,7 +194,7 @@ export async function initStandard(startDataParam, goalDataParam) {
     if (window.reset) window.reset();
     if (window.start) window.start();
     if (pathContainer) pathContainer.innerHTML = '';
-    if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+    if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
 
@@ -1106,7 +1106,7 @@ undoBtn.addEventListener('click', async () => {
         if (!isRunCompleted) {
             if (targetDiv) targetDiv.style.display = 'flex';
             if (victoryDiv) victoryDiv.style.display = 'none';
-            if (timerReturnBtn) timerReturnBtn.style.display = 'block';
+            if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
             if (targetDivText) targetDivText.innerText = 'TARGET';
         }
 
