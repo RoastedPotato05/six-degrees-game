@@ -194,7 +194,7 @@ export async function initStats() {
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
-                <button class="share-run-btn primary-purple" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; background: #884e88; border-radius: 3px; border: none; cursor: pointer; font-size: 24px; font-weight: 600; color: #fff; padding: 4px; width: 36px; height: 36px;"><span style="position: relative; top: -2px;">⮺</span></button>
+                <button class="share-run-btn primary-blue" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; background: #2f67b1; border-radius: 3px; border: none; cursor: pointer; font-size: 24px; font-weight: 600; color: #fff; padding: 4px; width: 36px; height: 36px;"><span style="position: relative; top: -2px;">⮺</span></button>
                 <button class="delete-run-btn primary-orange" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; background: #edae49; border-radius: 3px; border: none; cursor: pointer; font-size: 18px; color: #fff; padding: 4px; width: 36px; height: 36px;"><img src="images/trash.png" style="width: 30px; height: 30px;"></button>
                 <span class="dropdown-arrow" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #99AABB; display: inline-block; transform: scale(1, 1); user-select: none;">⌵</span>
             </div>
@@ -313,13 +313,13 @@ export async function initStats() {
 
         shareBtn.addEventListener('mouseenter', (e) => {
             e.stopPropagation();
-            shareBtn.style.backgroundColor = '#613761';
+            shareBtn.style.backgroundColor = '#13468a';
             runDiv.style.backgroundColor = '#202830'; // Reset row background so button stands out
         });
 
         shareBtn.addEventListener('mouseleave', (e) => {
             e.stopPropagation();
-            shareBtn.style.backgroundColor = '#884e88';
+            shareBtn.style.backgroundColor = '#2f67b1';
             runDiv.style.backgroundColor = '#161c22'; // Restore row hover background
         });
 
