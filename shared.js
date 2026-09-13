@@ -1,4 +1,7 @@
 // shared.js
+import Graph from "https://esm.sh/graphology";
+import Sigma from "https://esm.sh/sigma";
+
 const TMDB_API_KEY = '1bb166cc311693519c574fe0560e8d05';
 const BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -783,6 +786,8 @@ const BANNED_BIG_3 = [
   }
 ];
 
+export const graph = new Graph();
+
 
 let debounceTimer;
 let searchResults = [];
@@ -795,6 +800,10 @@ let tInterval = null;
 let difference = 0;
 let updatedTime = 0;
 let gamemodes = ["STANDARD", "DETOUR", "ENDLESS"];
+let sigmaInstance = null;
+let lastCenterNodeId = null;
+let hoveredNode = null;
+let hoveredNeighbors = new Set();
 
 
 
@@ -1350,6 +1359,419 @@ export function msToTime(ms) {
 
 
 
+export function updateGraph(path) {
+    if (!path || !Array.isArray(path)) return;
+
+    let newlyAddedNodes = [];
+
+    // 1. Update sizes & counts
+    path.forEach((item, index) => {
+        const nodeId = String(item.id);
+
+        if (graph.hasNode(nodeId)) {
+            const currentViewed = graph.getNodeAttribute(nodeId, "viewed") || 1;
+            const newViewed = currentViewed + 1;
+            graph.setNodeAttribute(nodeId, "viewed", newViewed);
+            graph.setNodeAttribute(nodeId, "size", Math.min(40, 8 + newViewed * 3));
+        } else {
+            const initialViewed = 1;
+            const initialSize = 8 + initialViewed * 3;
+            
+            graph.addNode(nodeId, {
+                id: item.id,
+                name: item.name,
+                label: item.name,
+                media_type: item.media_type,
+                imagePath: item.imagePath,
+                subText: item.subText,
+                viewed: initialViewed,
+                x: 0,
+                y: 0,
+                size: initialSize,
+                color: determineNodeColor(item.media_type)
+            });
+
+            newlyAddedNodes.push({ nodeId, index });
+        }
+    });
+
+    function determineNodeColor(mediaType) {
+      switch (mediaType) {
+          case 'movie':
+              return "#659157"; 
+          case 'tv':
+              return "#edae49"; 
+          case 'person':
+              return "#884e88"; 
+          default:
+              return "#99AABB";
+      }
+    }
+
+    const textContainer = document.getElementById('stats-graph-container-text');
+    if (textContainer) {
+        textContainer.style.display = graph.order === 0 ? 'flex' : 'none';
+    }
+
+    // 2. Sequential links
+    for (let i = 0; i < path.length - 1; i++) {
+        const sourceId = String(path[i].id);
+        const targetId = String(path[i + 1].id);
+
+        if (!graph.hasEdge(sourceId, targetId) && !graph.hasEdge(targetId, sourceId)) {
+            graph.addEdge(sourceId, targetId, { size: 2, color: "#99AABB" });
+        }
+    }
+
+    // 3. Find highest visited page (center node)
+    let currentCenterNode = null;
+    let maxViewed = -1;
+
+    graph.forEachNode((node, attributes) => {
+        const viewed = attributes.viewed || 1;
+        if (viewed > maxViewed) {
+            maxViewed = viewed;
+            currentCenterNode = node;
+        }
+    });
+
+    // 4. Always re-run the full layout on update
+    if (currentCenterNode) {
+        lastCenterNodeId = currentCenterNode;
+        runConcentricLayout(currentCenterNode);
+    }
+
+    // If stats tab is already active in the background, refresh canvas rendering directly
+    if (sigmaInstance) {
+        sigmaInstance.refresh();
+    }
+
+    saveGraph();
+}
+
+// Mounts the Graphology instance to the container without re-calculating layouts
+export function mountStatsGraph(container) {
+    if (!container || graph.order === 0) return;
+
+    if (sigmaInstance) {
+        sigmaInstance.refresh();
+        return;
+    }
+
+    sigmaInstance = new Sigma(graph, container, {
+        renderEdgeLabels: false,
+        renderNodeLabels: true,
+        allowInvalidContainer: true,
+        defaultNodeColor: "#edae49",
+        defaultEdgeColor: "#99AABB",
+        labelFont: "Graphik, sans-serif",
+        labelColor: { color: "#99AABB" },
+        labelRenderedSizeThreshold: 4,
+        labelDensity: Infinity,
+        autoRescale: false,
+        defaultDrawNodeLabel: (context, data, settings) => {
+            if (!data.label) return;
+
+            const font = settings.labelFont || "sans-serif";
+            const fontSize = settings.labelSize || 13;
+            const weight = "300";
+            const padding = 6; // Gap between node top border and label text
+
+            context.font = `${weight} ${fontSize}px ${font}`;
+            context.fillStyle = settings.labelColor?.color || "#f8f8f8";
+            context.textAlign = "center";
+            context.textBaseline = "bottom";
+
+            // data.x centers horizontally; (data.y - data.size - padding) places it above the node
+            context.fillText(
+                data.label, 
+                data.x, 
+                data.y - data.size - padding
+            );
+        },
+        defaultDrawNodeHover: (context, data, settings) => {
+            const size = data.size;
+            const x = data.x;
+            const y = data.y;
+
+            const font = settings.labelFont || "sans-serif";
+            const fontSize = settings.labelSize || 13;
+            const weight = "300";
+            const padding = 6;
+
+            // 1. Draw highlighted node ring & fill
+            context.beginPath();
+            context.arc(x, y, size + 4, 0, Math.PI * 2, false);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3.5;
+            context.stroke();
+            context.closePath();
+
+            context.beginPath();
+            context.arc(x, y, size, 0, Math.PI * 2, false);
+            context.fillStyle = data.color || settings.defaultNodeColor;
+            context.fill();
+            context.closePath();
+
+            // Setup label font
+            context.font = `${weight} ${fontSize}px ${font}`;
+            context.fillStyle = settings.labelColor?.color || "#f8f8f8";
+            context.textAlign = "center";
+            context.textBaseline = "bottom";
+
+            // 2. Draw hovered node label (forced display threshold = 0)
+            if (data.label) {
+                context.fillText(data.label, x, y - size - padding);
+            }
+
+            // 3. Draw connected neighbor labels (forced display threshold = 0)
+            if (hoveredNeighbors && hoveredNeighbors.size > 0 && sigmaInstance) {
+                hoveredNeighbors.forEach((neighborId) => {
+                    const nData = sigmaInstance.getNodeDisplayData(neighborId);
+                    const nLabel = graph.getNodeAttribute(neighborId, "label");
+                    if (nData && nLabel) {
+                        context.fillText(nLabel, nData.x, nData.y - nData.size - padding);
+                    }
+                });
+            }
+        },
+
+        // Dynamic Node Styling
+        nodeReducer: (node, data) => {
+            if (!hoveredNode) return data;
+
+            const isHovered = node === hoveredNode;
+            const isNeighbor = hoveredNeighbors.has(node);
+
+            if (isHovered || isNeighbor) {
+                return { 
+                    ...data, 
+                    forceLabel: true, // Forces Sigma to render labels regardless of zoom level
+                    zIndex: 1 
+                };
+            }
+
+            // Dim non-neighbors & hide their labels when unhovered
+            return {
+                ...data,
+                color: "#2c3844",
+                label: "", 
+                zIndex: 0
+            };
+        },
+
+        // Dynamic Edge Styling
+        edgeReducer: (edge, data) => {
+            if (!hoveredNode) return data;
+
+            const extremities = graph.extremities(edge);
+            const isConnectedToHovered = extremities.includes(hoveredNode);
+
+            if (isConnectedToHovered) {
+                return { ...data, color: "#99AABB", size: 3, zIndex: 1 };
+            }
+
+            return { ...data, color: "#161c2233", zIndex: 0 };
+        }
+    });
+
+    // Register Hover Event Listeners
+    sigmaInstance.on("enterNode", ({ node }) => {
+        hoveredNode = node;
+        hoveredNeighbors = new Set(graph.neighbors(node));
+        sigmaInstance.refresh();
+    });
+
+    sigmaInstance.on("leaveNode", () => {
+        hoveredNode = null;
+        hoveredNeighbors.clear();
+        sigmaInstance.refresh();
+    });
+}
+
+function runConcentricLayout(centerNode) {
+    if (!centerNode || !graph.hasNode(centerNode)) return;
+
+    const LAYER_RADIUS = 150; // Increased slightly so outer ring labels have room
+
+    // 1. BFS to determine exact hop depth (layer)
+    const depthMap = new Map();
+    const layers = new Map();
+    const queue = [{ node: centerNode, depth: 0 }];
+
+    depthMap.set(centerNode, 0);
+    layers.set(0, [centerNode]);
+
+    while (queue.length > 0) {
+        const { node, depth } = queue.shift();
+        graph.forEachNeighbor(node, (neighbor) => {
+            if (!depthMap.has(neighbor)) {
+                const nextDepth = depth + 1;
+                depthMap.set(neighbor, nextDepth);
+                if (!layers.has(nextDepth)) layers.set(nextDepth, []);
+                layers.get(nextDepth).push(neighbor);
+                queue.push({ node: neighbor, depth: nextDepth });
+            }
+        });
+    }
+
+    // Catch disconnected nodes (assign to Ring 1)
+    graph.forEachNode((node) => {
+        if (!depthMap.has(node)) {
+            depthMap.set(node, 1);
+            if (!layers.has(1)) layers.set(1, []);
+            layers.get(1).push(node);
+        }
+    });
+
+    // 2. Initial angular setup with WEDGE FAN-OUT
+    const angles = new Map();
+    angles.set(centerNode, 0);
+
+    const sortedDepths = Array.from(layers.keys()).sort((a, b) => a - b);
+
+    sortedDepths.forEach((depth) => {
+        if (depth === 0) return;
+        const nodes = layers.get(depth);
+        const count = nodes.length;
+
+        if (depth === 1) {
+            // Space Layer 1 evenly across all 360 degrees
+            nodes.forEach((node, index) => {
+                angles.set(node, (index / count) * 2 * Math.PI);
+            });
+        } else {
+            // Group nodes by their primary parent target angle
+            const nodeTargets = nodes.map((node) => {
+                let sumX = 0;
+                let sumY = 0;
+                let parentCount = 0;
+
+                graph.forEachNeighbor(node, (neighbor) => {
+                    if (depthMap.get(neighbor) < depth && angles.has(neighbor)) {
+                        const a = angles.get(neighbor);
+                        sumX += Math.cos(a);
+                        sumY += Math.sin(a);
+                        parentCount++;
+                    }
+                });
+
+                let targetAngle = parentCount > 0 ? Math.atan2(sumY, sumX) : Math.random() * 2 * Math.PI;
+                if (targetAngle < 0) targetAngle += 2 * Math.PI;
+
+                return { node, targetAngle };
+            });
+
+            // Sort nodes by parent target angle to maintain non-crossing layout order
+            nodeTargets.sort((a, b) => a.targetAngle - b.targetAngle);
+
+            // Spread out sorted nodes evenly around the ring so no two start on identical angles
+            nodeTargets.forEach((item, index) => {
+                const evenAngle = (index / count) * 2 * Math.PI;
+                // Blend 80% parent direction + 20% even ring distribution
+                let initialAngle = item.targetAngle * 0.8 + evenAngle * 0.2;
+                angles.set(item.node, initialAngle);
+            });
+        }
+    });
+
+    // 3. Angular Force Relaxation (Enforce minimum arc spacing on each ring)
+    const iterations = 60;
+    const ATTRACTION_WEIGHT = 0.08; // Gentle pull toward parent spoke
+    const REPULSION_WEIGHT = 0.1;  // Strong push to prevent node overlap on the same ring
+
+    for (let iter = 0; iter < iterations; iter++) {
+        sortedDepths.forEach((depth) => {
+            if (depth === 0) return;
+            const nodes = layers.get(depth);
+            const count = nodes.length;
+
+            // Minimum required arc distance between adjacent nodes on this ring
+            const minSpacing = (2 * Math.PI) / count;
+
+            nodes.forEach((node) => {
+                let force = 0;
+                const currentAngle = angles.get(node);
+
+                // Inter-layer attraction: pull toward connected neighbors
+                graph.forEachNeighbor(node, (neighbor) => {
+                    if (angles.has(neighbor) && neighbor !== centerNode) {
+                        let diff = angles.get(neighbor) - currentAngle;
+                        diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // Shortest arc [-PI, PI]
+                        force += diff * ATTRACTION_WEIGHT;
+                    }
+                });
+
+                // Intra-layer repulsion: strongly push nodes apart if closer than minSpacing
+                nodes.forEach((other) => {
+                    if (other !== node) {
+                        let diff = angles.get(other) - currentAngle;
+                        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+
+                        if (Math.abs(diff) < minSpacing && Math.abs(diff) > 0.0001) {
+                            const pushDirection = diff < 0 ? 1 : -1;
+                            const overlapAmount = minSpacing - Math.abs(diff);
+                            force += overlapAmount * pushDirection * REPULSION_WEIGHT;
+                        }
+                    }
+                });
+
+                let newAngle = (currentAngle + force + 2 * Math.PI) % (2 * Math.PI);
+                angles.set(node, newAngle);
+            });
+        });
+    }
+
+    // 4. Strict Snap to Radial Circles (r = depth * LAYER_RADIUS)
+    graph.setNodeAttribute(centerNode, "x", 0);
+    graph.setNodeAttribute(centerNode, "y", 0);
+
+    sortedDepths.forEach((depth) => {
+        if (depth === 0) return;
+        
+        const exactRadius = depth * LAYER_RADIUS;
+        const nodes = layers.get(depth);
+
+        nodes.forEach((node) => {
+            const theta = angles.get(node);
+            graph.setNodeAttribute(node, "x", exactRadius * Math.cos(theta));
+            graph.setNodeAttribute(node, "y", exactRadius * Math.sin(theta));
+        });
+    });
+}
+
+
+// Save current graph state to localStorage
+export function saveGraph() {
+    try {
+        const exportedData = graph.export();
+        localStorage.setItem('graphData', JSON.stringify(exportedData));
+    } catch (e) {
+        console.error("Failed to save graph to localStorage:", e);
+    }
+}
+
+// Load saved graph state from localStorage on startup
+export function loadGraph() {
+    const savedGraph = localStorage.getItem('graphData');
+    if (savedGraph) {
+        try {
+            graph.clear(); // Ensure clean slate before importing
+            graph.import(JSON.parse(savedGraph));
+        } catch (e) {
+            console.error("Failed to parse stored graph data:", e);
+        }
+    }
+}
+
+// Immediately load stored graph data when script runs
+loadGraph();
+
+
+
+
+
+
 
 
 
@@ -1368,11 +1790,16 @@ window.switchView = switchView;
 window.showInputError = showInputError;
 window.playSoundEffect = playSoundEffect;
 window.msToTime = msToTime;
+window.updateGraph = updateGraph;
+window.mountStatsGraph = mountStatsGraph;
+window.saveGraph = saveGraph;
+window.loadGraph = loadGraph;
 
 window.TMDB_API_KEY = TMDB_API_KEY;
 window.BASE_URL = BASE_URL;
 window.BANNED_MCU = BANNED_MCU;
 window.BANNED_BIG_3 = BANNED_BIG_3;
+window.graph = graph;
 
 window.debounceTimer = debounceTimer;
 window.searchResults = searchResults;

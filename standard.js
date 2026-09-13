@@ -1023,6 +1023,9 @@ function runComplete() {
 
     let stats = JSON.parse(localStorage.getItem('stats')) || {};
 
+
+    window.updateGraph(path);
+
     stats.wins = (stats.wins || 0) + 1;
 
     stats.winStreak = (stats.winStreak || 0) + 1;
@@ -1041,7 +1044,7 @@ function runComplete() {
         stats.longestPath = path.length;
     }
 
-    console.log('Current difference (time taken):', window.difference);
+    // console.log('Current difference (time taken):', window.difference);
     if (stats.fastestTime == null || window.difference < stats.fastestTime) {
         stats.fastestTime = window.difference;
     }
@@ -1128,3 +1131,6 @@ victoryShareBtn.addEventListener('click', () => {
         shareText.innerText = 'Copied to clipboard!';
     }
 });
+
+
+

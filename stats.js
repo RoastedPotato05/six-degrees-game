@@ -2,6 +2,8 @@
 
 export async function initStats() {
     // Fetch stats data from the server
+    window.updateGraph([]);
+    // this updates the graph on opening stats remove if that becomes an issue (it will go back to only updating on run complete)
     let stats = JSON.parse(localStorage.getItem('stats')) || {
         wins: 0,
         winStreak: 0,
@@ -16,6 +18,15 @@ export async function initStats() {
     };
     console.log('Stats data retrieved from localStorage:', stats);
 
+    let graph = JSON.parse(localStorage.getItem('graphData')) || null;
+    console.log('Graph data retrieved from localStorage:', graph);
+    if (!graph) {
+        document.getElementById('stats-graph').innerHTML = `
+            <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
+                <span id="stats-graph-container-text">No graph data available</span>
+            </div>`;
+    }
+
     let wins = stats.wins || 0;
     let winStreak = stats.winStreak || 0;
     let shortestPath = stats.shortestPath || 0;
@@ -25,6 +36,7 @@ export async function initStats() {
     let averageTime = stats.averageTime || 0;
     let slowestTime = stats.slowestTime || 0;
     let savedRuns = stats.savedRuns || [];
+    renderStatsGraph();
 
     // Update the stats display
     document.getElementById('wins').textContent = wins;
@@ -39,50 +51,50 @@ export async function initStats() {
 
 
     // Clear out any previous bars and reset the container with its default placeholder text
-    const mostVisitedContainer = document.getElementById('most-visited-container');
-    mostVisitedContainer.innerHTML = `
-        <div id="most-visited-container-text" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; justify-content: center; align-items: center; display: flex; height: 100%; box-sizing: border-box;">
-            <span>Most visited items will appear here</span>
-        </div>
-    `;
+    // const mostVisitedContainer = document.getElementById('most-visited-container');
+    // mostVisitedContainer.innerHTML = `
+    //     <div id="most-visited-container-text" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; justify-content: center; align-items: center; display: flex; height: 100%; box-sizing: border-box;">
+    //         <span>Most visited items will appear here</span>
+    //     </div>
+    // `;
 
-    // if there are items in mostVisited dict, hide most-visited-text, sort the items by count descending, and display them in the most-visited-container[cite: 8]
-    if (stats.mostVisited && Object.keys(stats.mostVisited).length > 0) {
-        const mostVisitedText = document.getElementById('most-visited-container-text');
-        mostVisitedText.style.display = 'none';
+    // if there are items in mostVisited dict, hide most-visited-text, sort the items by count descending, and display them in the most-visited-container
+    // if (stats.mostVisited && Object.keys(stats.mostVisited).length > 0) {
+    //     const mostVisitedText = document.getElementById('most-visited-container-text');
+    //     mostVisitedText.style.display = 'none';
 
-        // Sort the items by count descending
-        const sortedItems = Object.entries(stats.mostVisited).sort((a, b) => b[1] - a[1]);
-        const maxCount = sortedItems[0][1];
+    //     // Sort the items by count descending
+    //     const sortedItems = Object.entries(stats.mostVisited).sort((a, b) => b[1] - a[1]);
+    //     const maxCount = sortedItems[0][1];
 
-        // Display the sorted items in the most-visited-container
-        sortedItems.slice(0, 10).forEach(([key, count]) => {
-            const item = document.createElement('div');
-            item.style.cssText = 'display: flex; flex-direction: row; align-items: center; width: 100%; box-sizing: border-box; padding: 0px 10px; gap: 10px;';
+    //     // Display the sorted items in the most-visited-container
+    //     sortedItems.slice(0, 10).forEach(([key, count]) => {
+    //         const item = document.createElement('div');
+    //         item.style.cssText = 'display: flex; flex-direction: row; align-items: center; width: 100%; box-sizing: border-box; padding: 0px 10px; gap: 10px;';
 
-            const keyDiv = document.createElement('div');
-            keyDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex: 0 0 140px; width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
-            keyDiv.textContent = key;
+    //         const keyDiv = document.createElement('div');
+    //         keyDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex: 0 0 140px; width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+    //         keyDiv.textContent = key;
 
-            const barBoundingBox = document.createElement('div');
-            barBoundingBox.style.cssText = 'display: flex; flex: 1; height: 16px; background-color: #161c22; box-sizing: border-box; position: relative; overflow: hidden;';
+    //         const barBoundingBox = document.createElement('div');
+    //         barBoundingBox.style.cssText = 'display: flex; flex: 1; height: 16px; background-color: #161c22; box-sizing: border-box; position: relative; overflow: hidden;';
 
-            const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-            const barInner = document.createElement('div');
-            barInner.style.cssText = `width: ${percentage}%; height: 100%; background-color: #659157; box-sizing: border-box;`;
-            barBoundingBox.appendChild(barInner);
+    //         const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+    //         const barInner = document.createElement('div');
+    //         barInner.style.cssText = `width: ${percentage}%; height: 100%; background-color: #659157; box-sizing: border-box;`;
+    //         barBoundingBox.appendChild(barInner);
 
-            const countDiv = document.createElement('div');
-            countDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex-shrink: 0; white-space: nowrap; text-align: left; min-width: 20px;';
-            countDiv.textContent = count;
+    //         const countDiv = document.createElement('div');
+    //         countDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex-shrink: 0; white-space: nowrap; text-align: left; min-width: 20px;';
+    //         countDiv.textContent = count;
 
-            item.appendChild(keyDiv);
-            item.appendChild(barBoundingBox);
-            item.appendChild(countDiv);
+    //         item.appendChild(keyDiv);
+    //         item.appendChild(barBoundingBox);
+    //         item.appendChild(countDiv);
 
-            mostVisitedContainer.appendChild(item);
-        });
-    }
+    //         mostVisitedContainer.appendChild(item);
+    //     });
+    // }
 
     const container = document.getElementById('saved-runs-container');
     if (!container) return;
@@ -276,12 +288,7 @@ export async function initStats() {
         const deleteBtn = headerDiv.querySelector('.delete-run-btn');
         const shareBtn = headerDiv.querySelector('.share-run-btn');
 
-        if (shareBtn) {
-            console.log('Share button found for run index:', runIndex);
-        }
-        if (deleteBtn) {
-            console.log('Delete button found for run index:', runIndex);
-        }
+        
 
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -413,9 +420,33 @@ if (statsClearBtn) {
 
             // Clear stats and local data
             localStorage.removeItem('stats');
+            localStorage.removeItem('graphData');
+            if (window.graph) {
+                window.graph.clear();
+            }
             
             // Refresh stats UI to reset values back to 0 or N/A
             initStats();
         }
     });
+}
+
+
+
+
+export function renderStatsGraph() {
+    const container = document.getElementById("stats-graph");
+    if (!container) return;
+
+    if (graph.order === 0) {
+        container.innerHTML = `
+            <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
+                <span id="stats-graph-container-text">No graph data available</span>
+            </div>`;
+        
+        return;
+    }
+
+    // Displays the pre-calculated graph instantly
+    window.mountStatsGraph(container);
 }
