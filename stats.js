@@ -16,39 +16,43 @@ export async function initStats() {
 
     const graphContainer = document.getElementById('stats-graph');
     if (graphContainer) {
+        // Check if we actually have run data to display
         const hasData = stats.savedRuns && stats.savedRuns.length > 0;
 
         if (!hasData) {
-            // Clear graph data and render empty state cleanly
+            // Render empty / no-data state cleanly
             window.updateGraph([]);
             graphContainer.innerHTML = `
                 <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">
                     No graph data available
                 </div>
             `;
-        } else {
-            // Re-inject the canvas & search structure if it's currently showing text or missing
-            if (!graphContainer.querySelector('#sigma-canvas-wrapper')) {
-                graphContainer.innerHTML = `
-                    <div style="width:100%; height:100%; position:relative;">
-                        <div id="sigma-canvas-wrapper" style="position:absolute; top:0; left:0; width:100%; height:100%; overflow:hidden;"></div>
-                        <div style="position:absolute; top:0; left:0; width:100%; height:54px; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px; z-index:10; pointer-events:none; box-sizing:border-box;">
-                            <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; height: 54px; box-sizing: border-box; pointer-events: auto;">
-                                <div style="padding: 8px; position: relative; display: flex; align-items: top; flex: 1; box-sizing: border-box;">
-                                    <input id="graph-search-input" placeholder="Search for an item..." value="" style="z-index: 1; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                    <button class="clear-btn" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                </div>
+            return;
+        }
+
+        // If we DO have data, make sure the canvas & search structure is injected 
+        // (re-injects if it was previously showing the "no data" text message)
+        if (!graphContainer.querySelector('#sigma-canvas-wrapper')) {
+            graphContainer.innerHTML = `
+                <div style="width:100%; height:100%; position:relative;">
+                    <div id="sigma-canvas-wrapper" style="position:absolute; top:0; left:0; width:100%; height:100%; overflow:hidden;"></div>
+                    <div style="position:absolute; top:0; left:0; width:100%; height:54px; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px; z-index:10; pointer-events:none; box-sizing:border-box;">
+                        <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; height: 54px; box-sizing: border-box; pointer-events: auto;">
+                            <div style="padding: 8px; position: relative; display: flex; align-items: top; flex: 1; box-sizing: border-box;">
+                                <input id="graph-search-input" placeholder="Search for an item..." value="" style="z-index: 1; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                                <button class="clear-btn" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
                             </div>
                         </div>
                     </div>
-                `;
-            }
-            // Render the graph and refresh the sigma instance properly
-            renderStatsGraph();
-            if (window.sigmaInstance) {
-                window.sigmaInstance.refresh();
-            }
+                </div>
+            `;
         }
+    }
+
+    // Render the graph and refresh the sigma instance properly
+    renderStatsGraph();
+    if (window.sigmaInstance) {
+        window.sigmaInstance.refresh();
     }
 
     let wins = stats.wins || 0;
@@ -60,8 +64,10 @@ export async function initStats() {
     let averageTime = stats.averageTime || 0;
     let slowestTime = stats.slowestTime || 0;
     let savedRuns = stats.savedRuns || [];
+    renderStatsGraph();
+    window.sigmaInstance?.refresh();
 
-    // Update the stats display numbers
+    // Update the stats display
     document.getElementById('wins').textContent = wins;
     document.getElementById('win-streak').textContent = winStreak;
     document.getElementById('shortest-path').textContent = shortestPath;
@@ -71,8 +77,58 @@ export async function initStats() {
     document.getElementById('average-time').textContent = window.msToTime(averageTime);
     document.getElementById('slowest-time').textContent = window.msToTime(slowestTime);
 
+
+
+    // Clear out any previous bars and reset the container with its default placeholder text
+    // const mostVisitedContainer = document.getElementById('most-visited-container');
+    // mostVisitedContainer.innerHTML = `
+    //     <div id="most-visited-container-text" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; justify-content: center; align-items: center; display: flex; height: 100%; box-sizing: border-box;">
+    //         <span>Most visited items will appear here</span>
+    //     </div>
+    // `;
+
+    // if there are items in mostVisited dict, hide most-visited-text, sort the items by count descending, and display them in the most-visited-container
+    // if (stats.mostVisited && Object.keys(stats.mostVisited).length > 0) {
+    //     const mostVisitedText = document.getElementById('most-visited-container-text');
+    //     mostVisitedText.style.display = 'none';
+
+    //     // Sort the items by count descending
+    //     const sortedItems = Object.entries(stats.mostVisited).sort((a, b) => b[1] - a[1]);
+    //     const maxCount = sortedItems[0][1];
+
+    //     // Display the sorted items in the most-visited-container
+    //     sortedItems.slice(0, 10).forEach(([key, count]) => {
+    //         const item = document.createElement('div');
+    //         item.style.cssText = 'display: flex; flex-direction: row; align-items: center; width: 100%; box-sizing: border-box; padding: 0px 10px; gap: 10px;';
+
+    //         const keyDiv = document.createElement('div');
+    //         keyDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex: 0 0 140px; width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+    //         keyDiv.textContent = key;
+
+    //         const barBoundingBox = document.createElement('div');
+    //         barBoundingBox.style.cssText = 'display: flex; flex: 1; height: 16px; background-color: #161c22; box-sizing: border-box; position: relative; overflow: hidden;';
+
+    //         const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+    //         const barInner = document.createElement('div');
+    //         barInner.style.cssText = `width: ${percentage}%; height: 100%; background-color: #659157; box-sizing: border-box;`;
+    //         barBoundingBox.appendChild(barInner);
+
+    //         const countDiv = document.createElement('div');
+    //         countDiv.style.cssText = 'font-family: \'Graphik\', sans-serif; font-weight: 400; font-size: 18px; color: #99AABB; flex-shrink: 0; white-space: nowrap; text-align: left; min-width: 20px;';
+    //         countDiv.textContent = count;
+
+    //         item.appendChild(keyDiv);
+    //         item.appendChild(barBoundingBox);
+    //         item.appendChild(countDiv);
+
+    //         mostVisitedContainer.appendChild(item);
+    //     });
+    // }
+
     const container = document.getElementById('saved-runs-container');
     if (!container) return;
+
+    
 
     if (savedRuns.length === 0) {
         container.innerHTML = `
@@ -144,7 +200,7 @@ export async function initStats() {
                         </div>
                         ${imgHtml}
                     </div>
-                `.replace('Titled: ', '').replace('Sub: ', '');
+                `.replace('Titled: ', '').replace('Sub: ', ''); // Clean helper strings back out
             } else {
                 return `
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-start; text-align: left; flex: 1; overflow: hidden; min-width: 0;">
@@ -236,6 +292,7 @@ export async function initStats() {
                 pill.textContent = pathItem.title || pathItem.name || 'Item';
                 expandedPathDiv.appendChild(pill);
 
+                // Add an arrow between items (skip after the last item)
                 if (pathIdx < run.path.length - 1) {
                     const arrow = document.createElement('div');
                     arrow.style.cssText = `
@@ -260,6 +317,8 @@ export async function initStats() {
         const deleteBtn = headerDiv.querySelector('.delete-run-btn');
         const shareBtn = headerDiv.querySelector('.share-run-btn');
 
+        
+
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             let stats = JSON.parse(localStorage.getItem('stats') || '{}');
@@ -272,14 +331,14 @@ export async function initStats() {
 
         deleteBtn.addEventListener('mouseenter', (e) => {
             e.stopPropagation();
-            deleteBtn.style.backgroundColor = '#b48130';
-            runDiv.style.backgroundColor = '#202830';
+            deleteBtn.style.backgroundColor = '#b48130'; // Hover color
+            runDiv.style.backgroundColor = '#202830';    // Reset row background so button stands out
         });
 
         deleteBtn.addEventListener('mouseleave', (e) => {
             e.stopPropagation();
-            deleteBtn.style.backgroundColor = '#edae49';
-            runDiv.style.backgroundColor = '#161c22';
+            deleteBtn.style.backgroundColor = '#edae49'; // Default color
+            runDiv.style.backgroundColor = '#161c22';    // Restore row hover background
         });
 
         shareBtn.addEventListener('click', (e) => {
@@ -291,13 +350,13 @@ export async function initStats() {
         shareBtn.addEventListener('mouseenter', (e) => {
             e.stopPropagation();
             shareBtn.style.backgroundColor = '#13468a';
-            runDiv.style.backgroundColor = '#202830';
+            runDiv.style.backgroundColor = '#202830'; // Reset row background so button stands out
         });
 
         shareBtn.addEventListener('mouseleave', (e) => {
             e.stopPropagation();
             shareBtn.style.backgroundColor = '#2f67b1';
-            runDiv.style.backgroundColor = '#161c22';
+            runDiv.style.backgroundColor = '#161c22'; // Restore row hover background
         });
 
         runDiv.addEventListener('click', () => {
@@ -305,19 +364,22 @@ export async function initStats() {
             if (isExpanded) {
                 detailsPreviewDiv.style.display = 'none';
                 expandedPathDiv.style.display = 'flex';
-                arrowSpan.style.transform = 'scale(1, -1)';
+                arrowSpan.style.transform = 'scale(1, -1)'; // Flip the arrow
             } else {
                 detailsPreviewDiv.style.display = 'flex';
                 expandedPathDiv.style.display = 'none';
-                arrowSpan.style.transform = 'scale(1, 1)';
+                arrowSpan.style.transform = 'scale(1, 1)'; // Reset the arrow
             }
         });
 
         container.appendChild(runDiv);
     }
+
 }
 
 window.initStats = initStats;
+
+
 
 const statsReturnBtn = document.getElementById('stats-return-btn');
 if (statsReturnBtn) {
@@ -326,6 +388,7 @@ if (statsReturnBtn) {
     });
 }
 
+
 let clearConfirmTimeout = null;
 let isConfirmingClear = false;
 
@@ -333,6 +396,7 @@ const statsClearBtn = document.getElementById('stats-clear-btn');
 if (statsClearBtn) {
     statsClearBtn.addEventListener('click', () => {
         if (!isConfirmingClear) {
+            // First click: trigger warning state and show warning message
             isConfirmingClear = true;
             statsClearBtn.classList.add('stats-clear-warning');
 
@@ -343,8 +407,10 @@ if (statsClearBtn) {
                 msgEl.className = 'stats-clear-error-msg';
                 msgEl.textContent = 'WARNING: This will clear ALL of your local data\nPress again to confirm';
                 
+                // Append directly to the body to completely escape footer overflow clipping
                 document.body.appendChild(msgEl);
 
+                // Compute exact viewport coordinates to float right above the button
                 const rect = statsClearBtn.getBoundingClientRect();
                 msgEl.style.cssText = `
                     position: fixed;
@@ -367,28 +433,35 @@ if (statsClearBtn) {
                 `;
             }
 
+            // Reset after 5 seconds if not confirmed
             clearConfirmTimeout = setTimeout(() => {
                 isConfirmingClear = false;
                 statsClearBtn.classList.remove('stats-clear-warning');
                 if (msgEl) msgEl.remove();
             }, 5000);
         } else {
+            // Second click: execute data clear
             clearTimeout(clearConfirmTimeout);
             isConfirmingClear = false;
             statsClearBtn.classList.remove('stats-clear-warning');
             const msgEl = document.getElementById('stats-clear-msg');
             if (msgEl) msgEl.remove();
 
+            // Clear stats and local data
             localStorage.removeItem('stats');
             localStorage.removeItem('graphData');
             if (window.graph) {
                 window.graph.clear();
             }
             
+            // Refresh stats UI to reset values back to 0 or N/A
             initStats();
         }
     });
 }
+
+
+
 
 export function renderStatsGraph() {
     const container = document.getElementById("stats-graph");
@@ -396,7 +469,7 @@ export function renderStatsGraph() {
 
     const wrapper = container.querySelector("#sigma-canvas-wrapper");
 
-    if (window.graph && window.graph.order === 0) {
+    if (graph.order === 0) {
         if (wrapper) {
             wrapper.innerHTML = `
                 <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
@@ -406,5 +479,6 @@ export function renderStatsGraph() {
         return;
     }
 
+    // Displays the pre-calculated graph instantly
     window.mountStatsGraph(container);
 }
