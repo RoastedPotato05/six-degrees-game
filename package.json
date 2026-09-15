@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@sigma/node-border": "^3.0.0",
     "graphology": "^0.26.0",
     "sigma": "^3.0.3"
   }

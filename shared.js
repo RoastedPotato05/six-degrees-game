@@ -802,8 +802,10 @@ let updatedTime = 0;
 let gamemodes = ["STANDARD", "DETOUR", "ENDLESS"];
 let sigmaInstance = null;
 let lastCenterNodeId = null;
-let hoveredNode = null;
+let hoveredNodes = new Set();
 let hoveredNeighbors = new Set();
+let selectedNodes = new Set();       // <-- Tracks multiple selected nodes
+let selectedNeighbors = new Set();   // <-- Tracks neighbors of all selected nodes
 
 
 
@@ -1453,6 +1455,16 @@ export function updateGraph(path) {
 export function mountStatsGraph(container) {
     if (!container || graph.order === 0) return;
 
+    container.innerHTML = 
+        `<div style="display:flex; justify-content:top; align-items:top; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
+            <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; height: 54px; box-sizing: border-box;">
+                <div style="padding: 8px; position: relative; display: flex; align-items: top; flex: 1; box-sizing: border-box;">
+                    <input id="graph-search-input" placeholder="Search for an item..." value="" style="z-index: 1; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                    <button class="clear-btn" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                </div>
+            </div>
+        </div>`;
+
     if (sigmaInstance) {
         sigmaInstance.refresh();
         return;
@@ -1503,7 +1515,7 @@ export function mountStatsGraph(container) {
             context.beginPath();
             context.arc(x, y, size + 4, 0, Math.PI * 2, false);
             context.strokeStyle = "#ffffff";
-            context.lineWidth = 3.5;
+            context.lineWidth = 1.5;
             context.stroke();
             context.closePath();
 
@@ -1518,6 +1530,8 @@ export function mountStatsGraph(container) {
             context.fillStyle = settings.labelColor?.color || "#f8f8f8";
             context.textAlign = "center";
             context.textBaseline = "bottom";
+
+            
 
             // 2. Draw hovered node label (forced display threshold = 0)
             if (data.label) {
@@ -1538,20 +1552,31 @@ export function mountStatsGraph(container) {
 
         // Dynamic Node Styling
         nodeReducer: (node, data) => {
-            if (!hoveredNode) return data;
+            const isHovered = hoveredNodes.has(node);
+            const isNeighborOfHovered = hoveredNeighbors.has(node);
+            
+            const isSelected = selectedNodes.has(node);
+            const isNeighborOfSelected = selectedNeighbors.has(node);
 
-            const isHovered = node === hoveredNode;
-            const isNeighbor = hoveredNeighbors.has(node);
-
-            if (isHovered || isNeighbor) {
+            if (isHovered || isNeighborOfHovered || isSelected || isNeighborOfSelected) {
                 return { 
                     ...data, 
-                    forceLabel: true, // Forces Sigma to render labels regardless of zoom level
-                    zIndex: 1 
+                    forceLabel: true, 
+                    zIndex: 1
                 };
             }
 
-            // Dim non-neighbors & hide their labels when unhovered
+            if (selectedNodes.size > 0) {
+                return {
+                    ...data,
+                    color: "#2c3844",
+                    label: "",
+                    zIndex: 0
+                };
+            }
+
+            if (hoveredNodes.size === 0) return data;
+
             return {
                 ...data,
                 color: "#2c3844",
@@ -1562,30 +1587,190 @@ export function mountStatsGraph(container) {
 
         // Dynamic Edge Styling
         edgeReducer: (edge, data) => {
-            if (!hoveredNode) return data;
-
             const extremities = graph.extremities(edge);
-            const isConnectedToHovered = extremities.includes(hoveredNode);
+            const [u, v] = extremities;
+            
+            const isConnectedToHovered = extremities.some(n => hoveredNodes.has(n));
+            const isInternalEdge = selectedNodes.has(u) && selectedNodes.has(v);
+            const isConnectedToSelected = extremities.some(n => selectedNodes.has(n));
 
-            if (isConnectedToHovered) {
-                return { ...data, color: "#99AABB", size: 3, zIndex: 1 };
+            if (isConnectedToHovered || isConnectedToSelected) {
+                return { 
+                    ...data, 
+                    color: isInternalEdge ? "#ffcc00" : "#99AABB", 
+                    size: isInternalEdge ? 4 : 3, 
+                    zIndex: 1 
+                };
             }
 
-            return { ...data, color: "#161c2233", zIndex: 0 };
+            if (selectedNodes.size > 0 || hoveredNodes.size > 0) {
+                return { ...data, color: "#161c2233", zIndex: 0 };
+            }
+
+            return data;
         }
     });
 
+    // Add this right after your `sigmaInstance = new Sigma(...)` block
+
+sigmaInstance.on("afterRender", () => {
+    const canvases = sigmaInstance.getCanvases();
+    if (!canvases || !canvases.labels) return;
+    
+    const context = canvases.labels.getContext("2d");
+    if (!context) return;
+
+    const camera = sigmaInstance.getCamera();
+    const ratio = camera.getState().ratio;
+    const zoomScale = Math.sqrt(ratio);
+
+    // 1. Draw thick borders for permanent selections
+    if (selectedNodes && selectedNodes.size > 0) {
+        selectedNodes.forEach((nodeId) => {
+            const nData = sigmaInstance.getNodeDisplayData(nodeId);
+            const attrs = graph.getNodeAttributes(nodeId);
+            if (!nData || !attrs) return;
+
+            const pos = sigmaInstance.graphToViewport({ x: attrs.x, y: attrs.y });
+            const radius = (nData.size / zoomScale);
+
+            context.save();
+            context.beginPath();
+            context.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2, false);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 3.5; // Thicker border for clicks
+            context.stroke();
+            context.closePath();
+            context.restore();
+        });
+    }
+
+    // 2. Draw thin border for the active search result node
+    if (currentSearchNode && graph.hasNode(currentSearchNode)) {
+        const nData = sigmaInstance.getNodeDisplayData(currentSearchNode);
+        const attrs = graph.getNodeAttributes(currentSearchNode);
+        if (nData && attrs) {
+            const pos = sigmaInstance.graphToViewport({ x: attrs.x, y: attrs.y });
+            const radius = (nData.size / zoomScale);
+
+            context.save();
+            context.beginPath();
+            context.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2, false);
+            context.strokeStyle = "#ffffff";
+            context.lineWidth = 1.5; // Thinner border for search result
+            context.stroke();
+            context.closePath();
+            context.restore();
+        }
+    }
+});
+
     // Register Hover Event Listeners
-    sigmaInstance.on("enterNode", ({ node }) => {
-        hoveredNode = node;
-        hoveredNeighbors = new Set(graph.neighbors(node));
+        sigmaInstance.on("enterNode", ({ node }) => {
+        hoveredNodes.add(node);
+        updateHoveredNeighbors();
         sigmaInstance.refresh();
     });
 
-    sigmaInstance.on("leaveNode", () => {
-        hoveredNode = null;
-        hoveredNeighbors.clear();
+    sigmaInstance.on("leaveNode", ({ node }) => {
+        if (node === currentSearchNode) return; // Keeps the search highlight active even when leaving the node
+        hoveredNodes.delete(node);
+        updateHoveredNeighbors();
         sigmaInstance.refresh();
+    });
+
+    sigmaInstance.on("clickNode", ({ node }) => {
+      if (selectedNodes.has(node)) {
+            selectedNodes.delete(node);
+        } else {
+            selectedNodes.add(node);
+            
+            
+            
+            // Optionally center camera on the newly added node
+            // const nodeDisplayData = sigmaInstance.getNodeDisplayData(node);
+            // if (nodeDisplayData) {
+            //     sigmaInstance.getCamera().animate(
+            //         { x: nodeDisplayData.x, y: nodeDisplayData.y, ratio: sigmaInstance.getCamera().getState().ratio },
+            //         { duration: 300 }
+            //     );
+            // }
+        }
+        updateSelectedNeighbors();
+        sigmaInstance.refresh();
+    });
+
+    sigmaInstance.on("clickStage", () => {
+        if (selectedNodes.size > 0) {
+            selectedNodes.clear();
+            selectedNeighbors.clear();
+            sigmaInstance.refresh();
+        }
+    });
+
+    let currentSearchNode = null;
+
+    const searchInput = document.getElementById("graph-search-input");
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            // Remove previous search result from hoveredNodes if it exists
+            if (currentSearchNode) {
+                hoveredNodes.delete(currentSearchNode);
+                currentSearchNode = null;
+            }
+
+            if (!query) {
+                updateHoveredNeighbors();
+                if (sigmaInstance) sigmaInstance.refresh();
+                return;
+            }
+
+            let foundNodeId = null;
+            graph.forEachNode((node, attributes) => {
+                const label = (attributes.label || attributes.name || "").toLowerCase();
+                if (node.toLowerCase() === query || label === query || label.includes(query)) {
+                    foundNodeId = node;
+                }
+            });
+
+            if (foundNodeId) {
+                currentSearchNode = foundNodeId;
+                hoveredNodes.add(foundNodeId);
+
+                // Smoothly pan camera to the matching node
+                const nodeDisplayData = sigmaInstance.getNodeDisplayData(foundNodeId);
+                if (nodeDisplayData) {
+                    sigmaInstance.getCamera().animate(
+                        { x: nodeDisplayData.x, y: nodeDisplayData.y, ratio: sigmaInstance.getCamera().getState().ratio },
+                        { duration: 400 }
+                    );
+                }
+            }
+            
+            updateHoveredNeighbors();
+            if (sigmaInstance) sigmaInstance.refresh();
+        });
+    }
+}
+
+function updateSelectedNeighbors() {
+    selectedNeighbors.clear();
+    selectedNodes.forEach(node => {
+        graph.neighbors(node).forEach(neighbor => {
+            if (!selectedNodes.has(neighbor)) {
+                selectedNeighbors.add(neighbor);
+            }
+        });
+    });
+}
+
+function updateHoveredNeighbors() {
+    hoveredNeighbors.clear();
+    hoveredNodes.index = 0;
+    hoveredNodes.forEach(node => {
+        graph.neighbors(node).forEach(n => hoveredNeighbors.add(n));
     });
 }
 

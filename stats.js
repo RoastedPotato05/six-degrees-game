@@ -1,5 +1,3 @@
-
-
 export async function initStats() {
     // Fetch stats data from the server
     window.updateGraph([]);
