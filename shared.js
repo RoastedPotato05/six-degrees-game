@@ -1682,7 +1682,6 @@ sigmaInstance.on("afterRender", () => {
             infoBox.style.top = `${pos.y - radius - cardHeight - 24}px`;
 
             // Extract attributes safely
-            console.log("Node Attributes:", attrs);
             const name = attrs.name || attrs.label || "Unknown";
             const mediaType = attrs.media_type.toUpperCase();
             const year = attrs.subText || "";
