@@ -1682,8 +1682,10 @@ sigmaInstance.on("afterRender", () => {
             infoBox.style.top = `${pos.y - radius - cardHeight - 24}px`;
 
             // Extract attributes safely
+            console.log("Node Attributes:", attrs);
             const name = attrs.name || attrs.label || "Unknown";
-            const subText = `${attrs.media_type || ""}${attrs.subText ? ' • ' + attrs.subText : ''}`;
+            const mediaType = attrs.media_type.toUpperCase();
+            const year = attrs.subText || "";
             const visitCount = attrs.viewed || 0;
             const imageSrc = attrs.imagePath || "";
 
@@ -1695,7 +1697,9 @@ sigmaInstance.on("afterRender", () => {
                 </div>
                 <div class="content-container">
                   <div class="media-title">${name}</div>
-                  <div class="media-subtext">${subText.toUpperCase()}</div>
+                  <div class="media-subtext" style="display: flex; flex-direction: row;">
+                    <span style="display: flex; flex: 1;">${mediaType}${year ? ' • ' + year : ''}</span>
+                  </div>
                   <div class="media-stats">Visits: ${visitCount}</div>
                 </div>
               </div>
@@ -1740,13 +1744,12 @@ sigmaInstance.on("afterRender", () => {
                   display: flex;
                   flex-direction: column;
                   justify-content: center;
-                  overflow: hidden;
                   gap: 4px;
-                  width: calc(100% - 68px);
+                  width: calc(100%);
                 }
                 .media-title {
                   color: #f8f8f8;
-                  font-size: 16px;
+                  font-size: 14px;
                   font-weight: 600;
                   white-space: nowrap;
                   overflow: hidden;
@@ -1754,15 +1757,14 @@ sigmaInstance.on("afterRender", () => {
                 }
                 .media-subtext {
                   color: #99AABB;
-                  font-size: 13px;
+                  font-size: 11px;
                   font-weight: 400;
                   white-space: nowrap;
-                  overflow: hidden;
                   text-overflow: ellipsis;
                 }
                 .media-stats {
                   color: #edae49;
-                  font-size: 13px;
+                  font-size: 11px;
                   font-weight: 600;
                 }
               </style>
