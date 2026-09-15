@@ -1,5 +1,7 @@
 export async function initStats() {
-    // Fetch stats data from the local storage
+    // Fetch stats data from the server
+    window.updateGraph([]);
+    // this updates the graph on opening stats remove if that becomes an issue (it will go back to only updating on run complete)
     let stats = JSON.parse(localStorage.getItem('stats')) || {
         wins: 0,
         winStreak: 0,
@@ -16,22 +18,7 @@ export async function initStats() {
 
     const graphContainer = document.getElementById('stats-graph');
     if (graphContainer) {
-        // Check if we actually have run data to display
-        const hasData = stats.savedRuns && stats.savedRuns.length > 0;
-
-        if (!hasData) {
-            // Render empty / no-data state cleanly
-            window.updateGraph([]);
-            graphContainer.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">
-                    No graph data available
-                </div>
-            `;
-            return;
-        }
-
-        // If we DO have data, make sure the canvas & search structure is injected 
-        // (re-injects if it was previously showing the "no data" text message)
+        // Only inject the inner DOM structure if it doesn't already exist
         if (!graphContainer.querySelector('#sigma-canvas-wrapper')) {
             graphContainer.innerHTML = `
                 <div style="width:100%; height:100%; position:relative;">
@@ -49,11 +36,13 @@ export async function initStats() {
         }
     }
 
-    // Render the graph and refresh the sigma instance properly
     renderStatsGraph();
     if (window.sigmaInstance) {
         window.sigmaInstance.refresh();
     }
+
+    // 3. Render graph if data exists
+    renderStatsGraph();
 
     let wins = stats.wins || 0;
     let winStreak = stats.winStreak || 0;
