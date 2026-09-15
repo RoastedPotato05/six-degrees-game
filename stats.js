@@ -16,14 +16,33 @@ export async function initStats() {
     };
     console.log('Stats data retrieved from localStorage:', stats);
 
-    let graph = JSON.parse(localStorage.getItem('graphData')) || null;
-    console.log('Graph data retrieved from localStorage:', graph);
-    if (!graph) {
-        document.getElementById('stats-graph').innerHTML = `
-            <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
-                <span id="stats-graph-container-text">No graph data available</span>
-            </div>`;
+    const graphContainer = document.getElementById('stats-graph');
+    if (graphContainer) {
+        // Only inject the inner DOM structure if it doesn't already exist
+        if (!graphContainer.querySelector('#sigma-canvas-wrapper')) {
+            graphContainer.innerHTML = `
+                <div style="display:flex; flex-direction:column; width:100%; height:100%; position:relative;">
+                    <div style="display:flex; justify-content:top; align-items:top; width:100%; height:54px; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px; flex-shrink:0; z-index:2;">
+                        <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; height: 54px; box-sizing: border-box;">
+                            <div style="padding: 8px; position: relative; display: flex; align-items: top; flex: 1; box-sizing: border-box;">
+                                <input id="graph-search-input" placeholder="Search for an item..." value="" style="z-index: 1; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
+                                <button class="clear-btn" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sigma-canvas-wrapper" style="width:100%; flex:1; position:relative; overflow:hidden;"></div>
+                </div>
+            `;
+        }
     }
+
+    renderStatsGraph();
+    if (window.sigmaInstance) {
+        window.sigmaInstance.refresh();
+    }
+
+    // 3. Render graph if data exists
+    renderStatsGraph();
 
     let wins = stats.wins || 0;
     let winStreak = stats.winStreak || 0;
@@ -35,6 +54,7 @@ export async function initStats() {
     let slowestTime = stats.slowestTime || 0;
     let savedRuns = stats.savedRuns || [];
     renderStatsGraph();
+    window.sigmaInstance?.refresh();
 
     // Update the stats display
     document.getElementById('wins').textContent = wins;
@@ -436,12 +456,15 @@ export function renderStatsGraph() {
     const container = document.getElementById("stats-graph");
     if (!container) return;
 
+    const wrapper = container.querySelector("#sigma-canvas-wrapper");
+
     if (graph.order === 0) {
-        container.innerHTML = `
-            <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
-                <span id="stats-graph-container-text">No graph data available</span>
-            </div>`;
-        
+        if (wrapper) {
+            wrapper.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
+                    <span id="stats-graph-container-text">No graph data available</span>
+                </div>`;
+        }
         return;
     }
 

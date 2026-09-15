@@ -2,6 +2,7 @@
 import Graph from "https://esm.sh/graphology";
 import Sigma from "https://esm.sh/sigma";
 
+
 const TMDB_API_KEY = '1bb166cc311693519c574fe0560e8d05';
 const BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -1455,22 +1456,15 @@ export function updateGraph(path) {
 export function mountStatsGraph(container) {
     if (!container || graph.order === 0) return;
 
-    container.innerHTML = 
-        `<div style="display:flex; justify-content:top; align-items:top; width:100%; height:100%; color:#99AABB; font-family:'Graphik', sans-serif; font-size: 18px;">
-            <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; height: 54px; box-sizing: border-box;">
-                <div style="padding: 8px; position: relative; display: flex; align-items: top; flex: 1; box-sizing: border-box;">
-                    <input id="graph-search-input" placeholder="Search for an item..." value="" style="z-index: 1; width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                    <button class="clear-btn" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                </div>
-            </div>
-        </div>`;
+    // Target the specific inner canvas wrapper we created in initStats
+    const canvasTarget = container.querySelector('#sigma-canvas-wrapper') || container;
 
     if (sigmaInstance) {
         sigmaInstance.refresh();
         return;
     }
 
-    sigmaInstance = new Sigma(graph, container, {
+    sigmaInstance = new Sigma(graph, canvasTarget, {
         renderEdgeLabels: false,
         renderNodeLabels: true,
         allowInvalidContainer: true,
@@ -1534,9 +1528,9 @@ export function mountStatsGraph(container) {
             
 
             // 2. Draw hovered node label (forced display threshold = 0)
-            if (data.label) {
-                context.fillText(data.label, x, y - size - padding);
-            }
+            // if (data.label) {
+            //     context.fillText(data.label, x, y - size - padding);
+            // }
 
             // 3. Draw connected neighbor labels (forced display threshold = 0)
             if (hoveredNeighbors && hoveredNeighbors.size > 0 && sigmaInstance) {
@@ -1550,7 +1544,7 @@ export function mountStatsGraph(container) {
             }
         },
 
-        // Dynamic Node Styling
+        // Dynamic Node Styling in mountStatsGraph
         nodeReducer: (node, data) => {
             const isHovered = hoveredNodes.has(node);
             const isNeighborOfHovered = hoveredNeighbors.has(node);
@@ -1558,7 +1552,17 @@ export function mountStatsGraph(container) {
             const isSelected = selectedNodes.has(node);
             const isNeighborOfSelected = selectedNeighbors.has(node);
 
-            if (isHovered || isNeighborOfHovered || isSelected || isNeighborOfSelected) {
+            // If selected, clear the label entirely and let afterRender draw the custom info box
+            if (isSelected) {
+                return { 
+                    ...data, 
+                    label: "",       // Clear the label string so nothing renders by default
+                    forceLabel: false, 
+                    zIndex: 1
+                };
+            }
+
+            if (isHovered || isNeighborOfHovered || isNeighborOfSelected) {
                 return { 
                     ...data, 
                     forceLabel: true, 
@@ -1612,6 +1616,7 @@ export function mountStatsGraph(container) {
     });
 
     // Add this right after your `sigmaInstance = new Sigma(...)` block
+window.sigmaInstance = sigmaInstance;
 
 sigmaInstance.on("afterRender", () => {
     const canvases = sigmaInstance.getCanvases();
@@ -1623,8 +1628,27 @@ sigmaInstance.on("afterRender", () => {
     const camera = sigmaInstance.getCamera();
     const ratio = camera.getState().ratio;
     const zoomScale = Math.sqrt(ratio);
+    const container = sigmaInstance.getContainer();
 
-    // 1. Draw thick borders for permanent selections
+    // Ensure a wrapper for all popups exists behind the canvas layers
+    let popupContainer = document.getElementById("node-info-popups-wrapper");
+    if (!popupContainer) {
+        popupContainer = document.createElement("div");
+        popupContainer.id = "node-info-popups-wrapper";
+        popupContainer.style.position = "absolute";
+        popupContainer.style.top = "0";
+        popupContainer.style.left = "0";
+        popupContainer.style.width = "100%";
+        popupContainer.style.height = "100%";
+        popupContainer.style.pointerEvents = "none";
+        popupContainer.style.zIndex = "0";
+        container.appendChild(popupContainer);
+    }
+
+    // Clear previous frame's popups so they re-position smoothly on pan/zoom
+    popupContainer.innerHTML = "";
+
+    // 1. Draw Info Boxes & Selection Rings for all selected nodes
     if (selectedNodes && selectedNodes.size > 0) {
         selectedNodes.forEach((nodeId) => {
             const nData = sigmaInstance.getNodeDisplayData(nodeId);
@@ -1635,17 +1659,120 @@ sigmaInstance.on("afterRender", () => {
             const radius = (nData.size / zoomScale);
 
             context.save();
+            
+            // Draw selection ring on canvas
             context.beginPath();
             context.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2, false);
             context.strokeStyle = "#ffffff";
-            context.lineWidth = 3.5; // Thicker border for clicks
+            context.lineWidth = 3.5;
             context.stroke();
             context.closePath();
             context.restore();
+
+            // Create individual info box element for this node
+            const infoBox = document.createElement("div");
+            infoBox.style.position = "absolute";
+            infoBox.style.pointerEvents = "none";
+
+            const cardWidth = 240;
+            const cardHeight = 96 * 0.75;
+            
+            // Position centered horizontally, directly above the node
+            infoBox.style.left = `${pos.x - (cardWidth / 2)}px`;
+            infoBox.style.top = `${pos.y - radius - cardHeight - 24}px`;
+
+            // Extract attributes safely
+            const name = attrs.name || attrs.label || "Unknown";
+            const subText = `${attrs.media_type || ""}${attrs.subText ? ' • ' + attrs.subText : ''}`;
+            const visitCount = attrs.viewed || 0;
+            const imageSrc = attrs.imagePath || "";
+
+            // Render HTML Snippet
+            infoBox.innerHTML = `
+              <div class="media-info-card">
+                <div class="thumbnail-container">
+                  ${imageSrc ? `<img src="${imageSrc}" alt="Poster" class="media-poster" />` : '<span class="fallback-text">N/A</span>'}
+                </div>
+                <div class="content-container">
+                  <div class="media-title">${name}</div>
+                  <div class="media-subtext">${subText.toUpperCase()}</div>
+                  <div class="media-stats">Visits: ${visitCount}</div>
+                </div>
+              </div>
+
+              <style>
+                .media-info-card {
+                  display: flex;
+                  align-items: center;
+                  gap: 12px;
+                  width: 240px;
+                  height: 96px * 0.75;
+                  padding: 8px;
+                  background-color: #202830;
+                  border: 2px solid #99AABB;
+                  border-radius: 6px;
+                  box-sizing: border-box;
+                  font-family: "Graphik", sans-serif;
+                }
+                .thumbnail-container {
+                  flex-shrink: 0;
+                  width: calc(56px * 0.75);
+                  height: calc(80px * 0.75);
+                  border: 1px solid #99AABB;
+                  border-radius: 2px;
+                  overflow: hidden;
+                  background-color: #202830;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                }
+                .media-poster {
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                }
+                .fallback-text {
+                  color: #99AABB;
+                  font-size: 14px;
+                  font-weight: 600;
+                }
+                .content-container {
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  overflow: hidden;
+                  gap: 4px;
+                  width: calc(100% - 68px);
+                }
+                .media-title {
+                  color: #f8f8f8;
+                  font-size: 16px;
+                  font-weight: 600;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                }
+                .media-subtext {
+                  color: #99AABB;
+                  font-size: 13px;
+                  font-weight: 400;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                }
+                .media-stats {
+                  color: #edae49;
+                  font-size: 13px;
+                  font-weight: 600;
+                }
+              </style>
+            `;
+
+            popupContainer.appendChild(infoBox);
         });
     }
 
-    // 2. Draw thin border for the active search result node
+    // 2. Draw thin border for active search result node
     if (currentSearchNode && graph.hasNode(currentSearchNode)) {
         const nData = sigmaInstance.getNodeDisplayData(currentSearchNode);
         const attrs = graph.getNodeAttributes(currentSearchNode);
@@ -1657,7 +1784,7 @@ sigmaInstance.on("afterRender", () => {
             context.beginPath();
             context.arc(pos.x, pos.y, radius + 4, 0, Math.PI * 2, false);
             context.strokeStyle = "#ffffff";
-            context.lineWidth = 1.5; // Thinner border for search result
+            context.lineWidth = 1.5;
             context.stroke();
             context.closePath();
             context.restore();
@@ -1979,6 +2106,7 @@ window.updateGraph = updateGraph;
 window.mountStatsGraph = mountStatsGraph;
 window.saveGraph = saveGraph;
 window.loadGraph = loadGraph;
+
 
 window.TMDB_API_KEY = TMDB_API_KEY;
 window.BASE_URL = BASE_URL;
