@@ -415,132 +415,134 @@
         </div>
     </div>
 
-    <div id="view-home-mobile" class="app-view" style="display: flex; flex-direction: column; height: 80vh; width: 100%; min-height: 0;">
-        <div id="home-standard-mobile" style="display: flex; width: 100%; flex: 1; min-height: 0;">
+    <div id="view-home-mobile" class="app-view" style="display: flex; flex-direction: column; width: 100%; height: 100vh; overflow-y: auto; box-sizing: border-box; padding-bottom: 140px;">
+    
+    <!-- 1. HEADER (Clamped to screen width) -->
+    <div style="display: flex; width: 100%; justify-content: center; align-items: center; background: #161c22; padding: 16px 0; ">
+        <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(32px, 10vw, 56px); line-height: 1; color: #ffffff; text-align: center;">
+            Six Degrees
+        </span>
+    </div>
 
-            <div style="margin: 0 0px; flex: 1; min-height: 0; display: flex; flex-direction: column; border-left: 4px solid #161c22; border-right: 4px solid #161c22; padding: 20px; box-sizing: border-box;">
-                <div style="display: flex; flex-direction: column; text-align: center;">
-                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 64px; color: #ffffff; background: #161c22; margin: -20px -20px 0 -20px; padding: 20px;">Six Degrees</span>
+    <!-- MAIN SCROLLABLE CONTENT WRAPPER -->
+    <div style="display: flex; flex-direction: column; width: 100%; padding: 16px; box-sizing: border-box; gap: 20px;">
+
+        <!-- 2. GAMEMODE SELECTOR (Spans all the way across) -->
+        <div style="display: flex; flex-direction: row; width: 100%; height: 54px; border-bottom: 2px solid #FFFFFF; align-items: center; justify-content: space-between; box-sizing: border-box;">
+            <button id="nav-left" class="nav-button" style="text-align: center; width: 44px; height: 100%; font-size: clamp(24px, 6vw, 32px); font-weight: 600; background: transparent; border: none; color: #f8f8f8; cursor: pointer;">❮</button>
+            <span id="home-menu-gamemode-text" style="flex: 1; text-align: center; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(24px, 7vw, 36px); color: #edae49; white-space: nowrap;">STANDARD</span>
+            <button id="nav-right" class="nav-button" style="text-align: center; width: 44px; height: 100%; font-size: clamp(24px, 6vw, 32px); font-weight: 600; background: transparent; border: none; color: #f8f8f8; cursor: pointer;">❯</button>
+        </div>
+
+        <!-- 3. SEARCH CONTAINERS -->
+        <!-- Standard Search Inputs (Visible by default) -->
+        <div id="standard-inputs-container" style="display: flex; flex-direction: column; width: 100%; gap: 16px;">
+            <div class="search-block" id="start-input-block" style="display: flex; flex-direction: column; width: 100%;">
+                <label style="font-size: clamp(16px, 4.5vw, 20px); font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">START</label>
+                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                    <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                        <input id="standard-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 44px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                    </div> 
+                    <button id="standard-start-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                        <img src="images/dice.png" style="width: 26px; height: 26px;">
+                    </button>
                 </div>
+            </div>
 
-                <div style="display: flex; flex-direction: row; margin-top: 30px; gap: 20px; flex: 1; min-height: 0;">
-                    <div style="display: flex; flex-direction: column; width: 60%; overflow-y: auto; padding: 10px; box-sizing: border-box;">
-                        <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; align-items: center; justify-content: center;">
-                            <button id="nav-left-" class="nav-button" style="text-align: right; width: 5%; font-size: 36px; font-weight: 600;">❮</button>
-                            <span id="home-menu-gamemode-text" style="flex: 0 0 300px; text-align: center; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px; color: #edae49;">STANDARD</span>
-                            <button id="nav-right" class="nav-button" style="text-align: left; width: 5%; font-size: 36px; font-weight: 600;">❯</button>
-                        </div>
-
-                        <!-- STANDARD SEARCH CONTAINERS (Visible by default) -->
-                        <div id="standard-inputs-container" style="display: flex; flex-direction: column; width: 100%;">
-                            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="start-input-block">
-                                <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">START</label>
-                                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
-                                    <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
-                                        <input id="standard-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                    </div> 
-                                    <button id="standard-start-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                        <img src="images/dice.png" style="width: 28px; height: 28px;">
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="goal-input-block">
-                                <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">GOAL</label>
-                                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
-                                    <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
-                                        <input id="standard-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                    </div>
-                                    <button id="standard-goal-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                        <img src="images/dice.png" style="width: 28px; height: 28px;">
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- DETOUR SEARCH CONTAINERS (Hidden by default) -->
-                        <div id="detour-inputs-container" style="display: none; flex-direction: column; width: 100%;">
-                            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="detour-start-input-block">
-                                <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">START</label>
-                                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
-                                    <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
-                                        <input id="detour-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                    </div>
-                                    <button id="detour-start-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                        <img src="images/dice.png" style="width: 28px; height: 28px;">
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="detour-goal-input-block">
-                                <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">GOAL</label>
-                                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
-                                    <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
-                                        <input id="detour-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                    </div>
-                                    <button id="detour-goal-randomize-btn" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                        <img src="images/dice.png" style="width: 28px; height: 28px;">
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; box-sizing: border-box;" class="search-block" id="detour-list-input-block">
-                                <label style="font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 400; letter-spacing: 1px; color: #99AABB;">DETOURS</label>
-                                <div id="detour-search-containers-wrapper" style="display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 5px;">
-                                    <div class="detour-search-row" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
-                                        <div style="position: relative; display: flex; align-items: center; flex: 1; box-sizing: border-box;">
-                                            <input id="detour-search-1" placeholder="Search for a detour item..." value="" style="width: 100%; height: 36px; font-size: 18px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 30px; box-sizing: border-box;" autocomplete="off" />
-                                            <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 24px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
-                                        </div>
-                                        <button id="detour-randomize-1" class="flex-child primary-purple" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                            <img src="images/dice.png" style="width: 28px; height: 28px;">
-                                        </button>
-                                        <button id="detour-add-btn-1" class="flex-child primary-green detour-action-btn" style="margin-top: -6px; border-radius: 4px; flex-shrink: 0; width: 44px; height: 36px; position: relative; top: 3px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 24px; font-weight: 600; color: #f8f8f8; cursor: pointer;">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> 
+            <div class="search-block" id="goal-input-block" style="display: flex; flex-direction: column; width: 100%;">
+                <label style="font-size: clamp(16px, 4.5vw, 20px); font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">GOAL</label>
+                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
+                    <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                        <input id="standard-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 44px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
                     </div>
+                    <button id="standard-goal-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                        <img src="images/dice.png" style="width: 26px; height: 26px;">
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                    <div style="display: flex; width: 40%; overflow-x: auto;">
-                        <div style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
-                            <!-- START RUN BUTTONS (Switched via IDs) -->
-                            <button id="standard-start-run-btn" class="primary-orange" style="width: 100%; min-height: 80px; height: auto; display: flex; align-items: center; justify-content: center; padding: 12px 16px; box-sizing: border-box;">
-                                <span style="display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1; padding-bottom: 0.15em; width: 100%; text-align: center; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1;">Start Run</span>
-                            </button>
-                            <button id="detour-start-run-btn" class="primary-orange" style="width: 100%; height: 80px; display: none;">
-                                <span style="pointer-events: none; width: 100%; text-align: center; position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Start Run</span>
-                            </button>
-                            <div style="display:flex; flex-direction: row; gap: 20px;">
-                                <button id="stats-btn" class="flex-child primary-green" style="width: 70%; height: 80px;">
-                                    <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Stats</span>
-                                </button>
-                                <!-- RANDOMIZE RUN START BUTTONS (Switched via IDs) -->
-                                <button id="standard-run-randomize-btn" class="primary-purple" style="align-items: center; justify-content: center; width: 30%; height: 80px; display: flex;">
-                                    <span id="dice-png"><img src="images/dice.png" style="width: 60px; height: 60px; position: relative; top: 3px"></span>
-                                    <span id="random-text" style="display: none;">...</span>
-                                </button>
-                                <button id="detour-run-randomize-btn" class="primary-purple" style="align-items: center; justify-content: center; width: 30%; height: 80px; display: none;">
-                                    <span id="detour-dice-png"><img src="images/dice.png" style="width: 60px; height: 60px; position: relative; top: 3px"></span>
-                                    <span id="detour-random-text" style="display: none;">...</span>
-                                </button>
-                            </div>
-                            <button id="settings-btn" class="flex-child primary-blue" style="width: 100%; height: 80px;">
-                                <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Settings</span>
-                            </button>
+        <!-- Detour Search Inputs (Hidden by default) -->
+        <div id="detour-inputs-container" style="display: none; flex-direction: column; width: 100%; gap: 16px;">
+            <div class="search-block" id="detour-start-input-block" style="display: flex; flex-direction: column; width: 100%;">
+                <label style="font-size: clamp(16px, 4.5vw, 20px); font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">START</label>
+                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%;">
+                    <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                        <input id="detour-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 44px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                    </div>
+                    <button id="detour-start-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                        <img src="images/dice.png" style="width: 26px; height: 26px;">
+                    </button>
+                </div>
+            </div>
+
+            <div class="search-block" id="detour-goal-input-block" style="display: flex; flex-direction: column; width: 100%;">
+                <label style="font-size: clamp(16px, 4.5vw, 20px); font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">GOAL</label>
+                <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%;">
+                    <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                        <input id="detour-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 44px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                        <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                    </div>
+                    <button id="detour-goal-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                        <img src="images/dice.png" style="width: 26px; height: 26px;">
+                    </button>
+                </div>
+            </div>
+
+            <div class="search-block" id="detour-list-input-block" style="display: flex; flex-direction: column; width: 100%;">
+                <label style="font-size: clamp(16px, 4.5vw, 20px); font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">DETOURS</label>
+                <div id="detour-search-containers-wrapper" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                    <div class="detour-search-row" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%;">
+                        <div style="position: relative; display: flex; align-items: center; flex: 1;">
+                            <input id="detour-search-1" placeholder="Search for a detour item..." value="" style="width: 100%; height: 44px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                            <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
                         </div>
+                        <button id="detour-randomize-1" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                            <img src="images/dice.png" style="width: 26px; height: 26px;">
+                        </button>
+                        <button id="detour-add-btn-1" class="flex-child primary-green detour-action-btn" style="border-radius: 4px; flex-shrink: 0; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; color: #f8f8f8; cursor: pointer;">+</button>
                     </div>
                 </div>
             </div>
-        
+        </div> 
+
+        <!-- 4. BUTTONS SECTION -->
+        <div style="display: flex; flex-direction: column; gap: 14px; width: 100%; margin-top: 10px;">
+            <!-- Start Run Button (100% width) -->
+            <button id="standard-start-run-btn" class="primary-orange" style="width: 100%; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px 16px; box-sizing: border-box; border-radius: 6px;">
+                <span style="font-size: clamp(28px, 8vw, 42px); font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1;">Start Run</span>
+            </button>
+            <button id="detour-start-run-btn" class="primary-orange" style="width: 100%; min-height: 60px; display: none; align-items: center; justify-content: center; padding: 10px 16px; box-sizing: border-box; border-radius: 6px;">
+                <span style="font-size: clamp(28px, 8vw, 42px); font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1;">Start Run</span>
+            </button>
+
+            <!-- Stats (70%) & Dice (30%) Row -->
+            <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
+                <button id="stats-btn" class="flex-child primary-green" style="width: 70%; min-height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                    <span style="font-size: clamp(26px, 7.5vw, 38px); font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1;">Stats</span>
+                </button>
+                
+                <button id="standard-run-randomize-btn" class="primary-purple" style="width: 30%; min-height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                    <span id="dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 36px; height: 36px;"></span>
+                    <span id="random-text" style="display: none;">...</span>
+                </button>
+                <button id="detour-run-randomize-btn" class="primary-purple" style="width: 30%; min-height: 60px; display: none; align-items: center; justify-content: center; border-radius: 6px;">
+                    <span id="detour-dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 36px; height: 36px;"></span>
+                    <span id="detour-random-text" style="display: none;">...</span>
+                </button>
+            </div>
+
+            <!-- Settings Button (100% width) -->
+            <button id="settings-btn" class="flex-child primary-blue" style="width: 100%; min-height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+                <span style="font-size: clamp(26px, 7.5vw, 38px); font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1;">Settings</span>
+            </button>
         </div>
 
-        
     </div>
+</div>
 
 
 
@@ -610,7 +612,7 @@
         <div style="display: flex; width: 100%; height: auto; box-sizing: border-box;">
             
             <!-- Timer Footer Section -->
-            <div id="footer-timer-section" style="border: 2px solid red; display: flex; flex-direction: row; width: 100%; height: auto; padding: 0px 10px 30px 10px; box-sizing: border-box; justify-content: center; align-items: center;">
+            <div id="footer-timer-section" style="display: flex; flex-direction: row; width: 100%; height: auto; padding: 12px 10px; box-sizing: border-box; justify-content: center; align-items: center;">
                 <div style="width: 100%; display: flex; justify-content: center; align-items: center;">
                     <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(24px, 16vw, 18vh); line-height: 1; color: #f8f8f8; letter-spacing: -1px; display: inline-block; white-space: nowrap;">
                         <span id="minutes" class="text-green" style="display: inline-block; width: 2.0ch; text-align: center;">00</span>.<span id="seconds" class="text-orange" style="display: inline-block; width: 2.0ch; text-align: center;">00</span>.<span id="milliseconds" class="text-purple" style="display: inline-block; width: 3.0ch; text-align: center;">000</span>
