@@ -788,6 +788,7 @@ const BANNED_BIG_3 = [
 ];
 
 export const graph = new Graph();
+export const MOBILE_BREAKPOINT = 1000;
 
 
 let debounceTimer;
@@ -1202,6 +1203,13 @@ if (originalInputValueDescriptor) {
 
 
 function switchView(viewId, params = {}) {
+    currentActiveView = viewId;
+
+    // If currently below mobile breakpoint, don't show the desktop view
+    if (window.innerWidth <= MOBILE_BREAKPOINT) {
+        return;
+    }
+
     document.querySelectorAll('.app-view').forEach(view => {
         view.style.display = 'none';
     });
@@ -1253,6 +1261,7 @@ function switchView(viewId, params = {}) {
 // Auto-load home view on initial page load
 document.addEventListener('DOMContentLoaded', () => {
     switchView('view-home');
+    checkScreenThreshold();
 });
 
 
@@ -2079,6 +2088,48 @@ export function loadGraph() {
 
 // Immediately load stored graph data when script runs
 loadGraph();
+
+
+let currentActiveView = 'view-home';
+let isMobileMode = false;
+
+export function checkScreenThreshold() {
+    const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+    const views = document.querySelectorAll('.app-view');
+    const footer = document.getElementById('app-footer');
+    const mobileView = document.getElementById('view-home-mobile');
+    const mobileFooter = document.getElementById('app-footer-mobile');
+
+    if (isMobile) {
+        if (!isMobileMode) {
+            isMobileMode = true;
+            // Hide every standard desktop view
+            views.forEach(view => {
+                view.style.display = 'none';
+            });
+            // Hide the desktop footer
+            if (footer) footer.style.display = 'none';
+            // Show the mobile view container
+            if (mobileView) mobileView.style.display = 'flex';
+            // Show the mobile footer
+            if (mobileFooter) mobileFooter.style.display = 'flex';
+        }
+    } else {
+        if (isMobileMode) {
+            isMobileMode = false;
+            // Hide mobile container
+            if (mobileView) mobileView.style.display = 'none';
+            // Restore desktop footer
+            if (footer) footer.style.display = 'flex';
+            // Hide the mobile footer
+            if (mobileFooter) mobileFooter.style.display = 'none';
+            // Re-open the last active desktop view
+            switchView(currentActiveView);
+        }
+    }
+}
+
+window.addEventListener('resize', checkScreenThreshold);
 
 
 
