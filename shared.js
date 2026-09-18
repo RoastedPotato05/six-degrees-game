@@ -1114,7 +1114,6 @@ function stop() {
     difference = Date.now() - startTime; // Save elapsed time
     window.difference = difference;
 
-    // Force the visual display to match the final calculated difference exactly
     let updatedTime = new Date(difference);
     let minutes = updatedTime.getUTCMinutes();
     let seconds = updatedTime.getUTCSeconds();
@@ -1124,9 +1123,9 @@ function stop() {
     seconds = seconds < 10 ? "0" + seconds : seconds;
     milliseconds = milliseconds < 100 ? (milliseconds < 10 ? "00" + milliseconds : "0" + milliseconds) : milliseconds;
 
-    document.getElementById("minutes").textContent = minutes;
-    document.getElementById("seconds").textContent = seconds;
-    document.getElementById("milliseconds").textContent = milliseconds;
+    document.querySelectorAll("#minutes").forEach(el => el.textContent = minutes);
+    document.querySelectorAll("#seconds").forEach(el => el.textContent = seconds);
+    document.querySelectorAll("#milliseconds").forEach(el => el.textContent = milliseconds);
 }
 
 function reset() {
@@ -1134,9 +1133,9 @@ function reset() {
     clearInterval(tInterval);
     difference = 0;
     window.difference = difference;
-    document.getElementById("minutes").textContent = "00";
-    document.getElementById("seconds").textContent = "00";
-    document.getElementById("milliseconds").textContent = "000";
+    document.querySelectorAll("#minutes").forEach(el => el.textContent = "00");
+    document.querySelectorAll("#seconds").forEach(el => el.textContent = "00");
+    document.querySelectorAll("#milliseconds").forEach(el => el.textContent = "000");
 }
 
 function updateDisplay() {
@@ -1145,14 +1144,14 @@ function updateDisplay() {
     let minutes = updatedTime.getUTCMinutes();
     let seconds = updatedTime.getUTCSeconds();
     let milliseconds = updatedTime.getUTCMilliseconds();
-    // Format time to ensure leading zeros
     minutes = minutes < 10 ? "0" + minutes : minutes;
     seconds = seconds < 10 ? "0" + seconds : seconds;
-    milliseconds = milliseconds < 100 ? milliseconds < 10 ? "00" + milliseconds : "0" + milliseconds : milliseconds;
+    milliseconds = milliseconds < 100 ? (milliseconds < 10 ? "00" + milliseconds : "0" + milliseconds) : milliseconds;
 
-    document.getElementById("minutes").textContent = minutes;
-    document.getElementById("seconds").textContent = seconds;
-    document.getElementById("milliseconds").textContent = milliseconds;
+    // Updates both Desktop & Mobile timers simultaneously
+    document.querySelectorAll("#minutes").forEach(el => el.textContent = minutes);
+    document.querySelectorAll("#seconds").forEach(el => el.textContent = seconds);
+    document.querySelectorAll("#milliseconds").forEach(el => el.textContent = milliseconds);
 }
 
 // Listen for typing on ANY input to show/hide its specific clear button
@@ -1203,55 +1202,77 @@ if (originalInputValueDescriptor) {
 
 
 function switchView(viewId, params = {}) {
-    currentActiveView = viewId;
+    const baseView = viewId.replace('-mobile', '');
+    currentActiveView = baseView;
 
-    // If currently below mobile breakpoint, don't show the desktop view
-    if (window.innerWidth <= MOBILE_BREAKPOINT) {
-        return;
-    }
+    const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+    const targetViewId = isMobile ? `${baseView}-mobile` : baseView;
 
+    // 1. Hide all views
     document.querySelectorAll('.app-view').forEach(view => {
         view.style.display = 'none';
     });
-    document.getElementById('save-text').innerText = 'Save';
-    document.getElementById('share-text').innerText = 'Share';
+
+    const saveText = document.getElementById('save-text');
+    if (saveText) saveText.innerText = 'Save';
+    const shareText = document.getElementById('share-text');
+    if (shareText) shareText.innerText = 'Share';
 
     reset();
 
-    const timerSection = document.getElementById('footer-timer-section');
-    const settingsSection = document.getElementById('footer-settings-section');
-    const statsSection = document.getElementById('footer-stats-section');
-
+    // 2. Toggle active footer (Desktop vs Mobile)
+    const desktopFooter = document.getElementById('app-footer');
+    const mobileFooter = document.getElementById('app-footer-mobile');
     
-    document.getElementById('timer-return-btn').style.display = 'none';
-    
-    if (timerSection) timerSection.style.display = 'none';
-    if (settingsSection) settingsSection.style.display = 'none';
-    if (statsSection) statsSection.style.display = 'none';
-
-    if (viewId === 'view-settings') {
-        if (settingsSection) settingsSection.style.display = 'flex';
-    } else if (viewId === 'view-stats') {
-        if (statsSection) statsSection.style.display = 'flex';
+    if (isMobile) {
+        if (desktopFooter) desktopFooter.style.display = 'none';
+        if (mobileFooter) mobileFooter.style.display = 'flex';
     } else {
-        if (timerSection) timerSection.style.display = 'flex';
+        if (desktopFooter) desktopFooter.style.display = 'flex';
+        if (mobileFooter) mobileFooter.style.display = 'none';
     }
 
-    const targetView = document.getElementById(viewId);
+    const activeFooter = isMobile ? mobileFooter : desktopFooter;
+
+    // 3. Hide all footer sub-sections across both footers
+    document.querySelectorAll('#footer-timer-section, #footer-settings-section, #footer-stats-section').forEach(sec => {
+        sec.style.display = 'none';
+    });
+    document.querySelectorAll('#timer-return-btn').forEach(btn => {
+        btn.style.display = 'none';
+    });
+
+    // 4. Show the active sub-section in the current footer
+    if (activeFooter) {
+        if (baseView === 'view-settings') {
+            activeFooter.querySelectorAll('#footer-settings-section').forEach(el => el.style.display = 'flex');
+        } else if (baseView === 'view-stats') {
+            activeFooter.querySelectorAll('#footer-stats-section').forEach(el => el.style.display = 'flex');
+        } else {
+            activeFooter.querySelectorAll('#footer-timer-section').forEach(el => el.style.display = 'flex');
+        }
+    }
+
+    // 5. Display the matching view (with fallback to desktop view if mobile view isn't built yet)
+    let targetView = document.getElementById(targetViewId);
+    if (!targetView && isMobile) {
+        targetView = document.getElementById(baseView);
+    }
+
     if (targetView) {
         targetView.style.display = 'flex';
-        window.scrollTo(0, 0);
+        targetView.scrollTop = 0;
 
-        if (viewId === 'view-home' && typeof window.initHome === 'function') {
+        if (baseView === 'view-home' && typeof window.initHome === 'function') {
             window.initHome();
-        } else if (viewId === 'view-settings' && typeof window.initSettings === 'function') {
+        } else if (baseView === 'view-settings' && typeof window.initSettings === 'function') {
             window.initSettings();
-        } else if (viewId === 'view-standard' && typeof window.initStandard === 'function') {
+        } else if (baseView === 'view-standard' && typeof window.initStandard === 'function') {
             window.currentMode = 'STANDARD';
             window.initStandard(params.start, params.goal);
-        } else if (viewId === 'view-detours' && typeof window.initDetours === 'function') {
+        } else if (baseView === 'view-detours' && typeof window.initDetours === 'function') {
             window.initDetours();
-        } else if (viewId === 'view-stats' && typeof window.initStats === 'function') {
+        } else if (baseView === 'view-stats' && typeof window.initStats === 'function') {
             window.initStats();
         }
     }
@@ -2095,41 +2116,22 @@ let isMobileMode = false;
 
 export function checkScreenThreshold() {
     const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
-    const views = document.querySelectorAll('.app-view');
-    const footer = document.getElementById('app-footer');
-    const mobileView = document.getElementById('view-home-mobile');
-    const mobileFooter = document.getElementById('app-footer-mobile');
 
-    if (isMobile) {
-        if (!isMobileMode) {
-            isMobileMode = true;
-            // Hide every standard desktop view
-            views.forEach(view => {
-                view.style.display = 'none';
-            });
-            // Hide the desktop footer
-            if (footer) footer.style.display = 'none';
-            // Show the mobile view container
-            if (mobileView) mobileView.style.display = 'flex';
-            // Show the mobile footer
-            if (mobileFooter) mobileFooter.style.display = 'flex';
-        }
-    } else {
-        if (isMobileMode) {
-            isMobileMode = false;
-            // Hide mobile container
-            if (mobileView) mobileView.style.display = 'none';
-            // Restore desktop footer
-            if (footer) footer.style.display = 'flex';
-            // Hide the mobile footer
-            if (mobileFooter) mobileFooter.style.display = 'none';
-            // Re-open the last active desktop view
-            switchView(currentActiveView);
-        }
+    if (isMobile !== isMobileMode) {
+        isMobileMode = isMobile;
+        switchView(currentActiveView);
     }
 }
 
 window.addEventListener('resize', checkScreenThreshold);
+
+// Attach Return listeners to both desktop and mobile footer return buttons
+document.querySelectorAll('#settings-return-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchView('view-home'));
+});
+document.querySelectorAll('#stats-return-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchView('view-home'));
+});
 
 
 

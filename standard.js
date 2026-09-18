@@ -1,3 +1,4 @@
+// Desktop Elements
 const currentTitle = document.getElementById('current-title');
 const currentPoster = document.getElementById('current-poster');
 const castDepartments = document.getElementById('cast/departments');
@@ -16,6 +17,95 @@ const victoryRandomizeBtn = document.getElementById('victory-randomize-btn');
 const victorySaveBtn = document.getElementById('victory-save-btn');
 const victoryShareBtn = document.getElementById('victory-share-btn');
 const victoryDiv = document.getElementById('victory-div');
+
+// Mobile Elements
+const currentTitleMobile = document.getElementById('current-title-mobile');
+const currentPosterMobile = document.getElementById('current-poster-mobile');
+const targetPosterMobileExtended = document.getElementById('target-poster-mobile-extended');
+const castDepartmentsMobile = document.getElementById('cast/departments-mobile');
+const nameMovieListMobile = document.getElementById('name/movie-list-mobile');
+const targetPosterMobile = document.getElementById('target-poster-mobile');
+const targetNameMobile = document.getElementById('target-name-mobile');
+const targetInfoMobile = document.getElementById('target-info-mobile');
+const itemSearchMobile = document.getElementById('item-search-mobile');
+const mobileReturnBtn = document.getElementById('standard-mobile-return-btn');
+
+// Hook mobile search input to filter items
+if (itemSearchMobile) {
+    itemSearchMobile.addEventListener('input', () => {
+        applySearchFilter();
+    });
+}
+
+function updateMobileSearchLayout() {
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
+    if (!isMobile) return;
+
+    const titleEl = document.getElementById('current-title-mobile');
+    const tabsEl = document.getElementById('cast/departments-mobile');
+    const groupEl = document.getElementById('mobile-tabs-search-group');
+    const slotCompact = document.getElementById('tabs-search-slot-compact');
+    const slotNormal = document.getElementById('tabs-search-slot-normal');
+    const posterEl = document.getElementById('current-poster-mobile');
+
+    if (!titleEl || !tabsEl || !groupEl || !slotCompact || !slotNormal) return;
+
+    const posterHeight = posterEl ? (posterEl.offsetHeight || 150) : 150;
+    const titleHeight = titleEl.offsetHeight || 30;
+    const tabsHeight = tabsEl.offsetHeight || 30;
+    const searchHeight = 36;
+    const spacing = 16;
+
+    // If Title + Tabs + Search fit comfortably next to the poster:
+    // Place Tabs + Search directly beside the poster (Tabs above Search, Search above list content).
+    // Otherwise: move both Tabs + Search below the poster (Tabs above Search).
+    if (titleHeight + tabsHeight + searchHeight + spacing <= posterHeight + 10) {
+        if (!slotCompact.contains(groupEl)) {
+            slotCompact.appendChild(groupEl);
+        }
+    } else {
+        if (!slotNormal.contains(groupEl)) {
+            slotNormal.appendChild(groupEl);
+        }
+    }
+}
+window.addEventListener('resize', updateMobileSearchLayout);
+
+// Hook mobile return button to navigate home
+if (mobileReturnBtn) {
+    mobileReturnBtn.addEventListener('click', () => {
+        const stats = JSON.parse(localStorage.getItem('stats')) || {};
+        stats.winStreak = 0;
+        localStorage.setItem('stats', JSON.stringify(stats));
+        window.switchView('view-home');
+    });
+}
+
+// Target Dropdown Toggle Logic
+const targetDropdownBar = document.getElementById('target-dropdown-bar');
+const targetExtendedInfo = document.getElementById('target-extended-info');
+const targetDropdownArrow = document.getElementById('target-dropdown-arrow');
+const targetNameMobileText = document.getElementById('target-name-mobile');
+
+if (targetDropdownBar) {
+    targetDropdownBar.addEventListener('click', () => {
+        // Prevent expanding if Target Name Only is active
+        if (localStorage.getItem('target-name-only') === 'true') return;
+
+        const isClosed = targetExtendedInfo.style.display === 'none';
+        if (isClosed) {
+            targetExtendedInfo.style.display = 'flex';
+            targetDropdownArrow.style.transform = 'scale(1, -1)'; // Flip arrow up
+            targetNameMobileText.style.whiteSpace = 'normal';     // Allow title to wrap
+            if (targetPosterMobile) targetPosterMobile.style.display = 'none';
+        } else {
+            targetExtendedInfo.style.display = 'none';
+            targetDropdownArrow.style.transform = 'scale(1, 1)';  // Reset arrow
+            targetNameMobileText.style.whiteSpace = 'nowrap';     // Ellipsis cut-off
+            if (targetPosterMobile) targetPosterMobile.style.display = 'flex';
+        }
+    });
+}
 
 // Ensure list container maintains the wrap layout and scrolling properties
 nameMovieList.style.display = 'flex';
@@ -88,8 +178,30 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
 
         // Render the target info
         const goalType = goalData.media_type;
-        if (localStorage.getItem('target-name-only') === 'true') {
+        const isTargetNameOnly = localStorage.getItem('target-name-only') === 'true';
+
+        // Configure mobile target bar based on Target Name Only setting
+        if (targetDropdownArrow) {
+            targetDropdownArrow.style.display = isTargetNameOnly ? 'none' : 'block';
+            targetDropdownArrow.style.transform = 'scale(1, 1)';
+        }
+        if (targetDropdownBar) {
+            targetDropdownBar.style.cursor = isTargetNameOnly ? 'default' : 'pointer';
+        }
+        if (targetExtendedInfo) {
+            targetExtendedInfo.style.display = 'none';
+        }
+        if (targetPosterMobile) {
+            targetPosterMobile.style.display = 'flex';
+        }
+        if (targetNameMobileText) {
+            targetNameMobileText.style.whiteSpace = 'nowrap';
+        }
+
+        if (isTargetNameOnly) {
             targetInfo.style.border = 'none';
+            targetInfo.innerHTML = '';
+            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
         }
         else if (goalType === 'movie') {
             const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
@@ -220,28 +332,52 @@ export async function initStandard(startDataParam, goalDataParam) {
     }
 
     if (goalData) {
-        // Render the target poster
+        // Render the target poster (Desktop & Mobile)
         const targetPosterPath = goalData.poster_path || goalData.profile_path;
-        if (targetPosterPath) {
-            if (goalData.imageUrl) {
-                targetPoster.innerHTML = `<img src="${goalData.imageUrl}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
-            } else {
-                targetPoster.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${targetPosterPath}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
-            }
+        const posterImgSrc = goalData.imageUrl || (targetPosterPath ? `https://image.tmdb.org/t/p/w500${targetPosterPath}` : null);
+        
+        if (posterImgSrc) {
+            targetPoster.innerHTML = `<img src="${posterImgSrc}" style="width: 60%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; align-self: flex-start; border-radius: 2px;">`;
+            if (targetPosterMobile) targetPosterMobile.innerHTML = `<img src="${posterImgSrc}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">`;
+            if (targetPosterMobileExtended) targetPosterMobileExtended.innerHTML = `<img src="${posterImgSrc}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">`;
         } else {
-            targetPoster.innerHTML = `<svg viewBox="0 0 56 84" style="width: 60%; height: auto; align-self: flex-start; border-radius: 2px;">
-                <rect width="56" height="84" fill="#2c3844" rx="2"></rect>
-                <text x="28" y="42" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="16">N/A</text>
-            </svg>`;
+            const fallbackSvg = `<svg viewBox="0 0 56 84" style="width: 100%; height: 100%; border-radius: 2px;"><rect width="56" height="84" fill="#2c3844" rx="2"></rect><text x="28" y="42" dominant-baseline="middle" text-anchor="middle" fill="#99AABB" font-family="'Graphik', sans-serif" font-weight="600" font-size="14">N/A</text></svg>`;
+            targetPoster.innerHTML = fallbackSvg;
+            if (targetPosterMobile) targetPosterMobile.innerHTML = fallbackSvg;
+            if (targetPosterMobileExtended) targetPosterMobileExtended.innerHTML = fallbackSvg;
         }
 
-        // Render the target name
-        targetName.innerText = goalData.title || goalData.name;
+        // Render the target name (Desktop & Mobile)
+        const gName = goalData.title || goalData.name;
+        targetName.innerText = gName;
+        if (targetNameMobile) targetNameMobile.innerText = gName;
 
         // Render the target info
         const goalType = goalData.media_type;
-        if (localStorage.getItem('target-name-only') === 'true') {
+        const isTargetNameOnly = localStorage.getItem('target-name-only') === 'true';
+
+        // Configure mobile target bar based on Target Name Only setting
+        if (targetDropdownArrow) {
+            targetDropdownArrow.style.display = isTargetNameOnly ? 'none' : 'block';
+            targetDropdownArrow.style.transform = 'scale(1, 1)';
+        }
+        if (targetDropdownBar) {
+            targetDropdownBar.style.cursor = isTargetNameOnly ? 'default' : 'pointer';
+        }
+        if (targetExtendedInfo) {
+            targetExtendedInfo.style.display = 'none';
+        }
+        if (targetPosterMobile) {
+            targetPosterMobile.style.display = 'flex';
+        }
+        if (targetNameMobileText) {
+            targetNameMobileText.style.whiteSpace = 'nowrap';
+        }
+
+        if (isTargetNameOnly) {
             targetInfo.style.border = 'none';
+            targetInfo.innerHTML = '';
+            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
         }
         else if (goalType === 'movie') {
             const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
@@ -341,19 +477,20 @@ let currentDisplayItems = [];
 let currentIsPersonTarget = false;
 let currentIsCrewGrouped = false;
 
-// Active search input listener
-if (itemSearch) {
-    itemSearch.addEventListener('input', () => {
-        applySearchFilter();
-    });
-}
+// Active search input listeners
+if (itemSearch) itemSearch.addEventListener('input', applySearchFilter);
+if (itemSearchMobile) itemSearchMobile.addEventListener('input', applySearchFilter);
 
 function applySearchFilter() {
-    if (!itemSearch) return;
-    const query = itemSearch.value.toLowerCase().trim();
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
+    const activeInput = isMobile ? itemSearchMobile : itemSearch;
+    const activeList = isMobile ? nameMovieListMobile : nameMovieList;
+    if (!activeInput || !activeList) return;
+
+    const query = activeInput.value.toLowerCase().trim();
 
     if (currentIsCrewGrouped) {
-        const groupElements = nameMovieList.querySelectorAll('.crew-group-container');
+        const groupElements = activeList.querySelectorAll('.crew-group-container');
         groupElements.forEach(groupEl => {
             const memberButtons = groupEl.querySelectorAll('.item-btn');
             let hasVisibleMember = false;
@@ -371,7 +508,7 @@ function applySearchFilter() {
             groupEl.style.display = hasVisibleMember ? '' : 'none';
         });
     } else {
-        const itemButtons = nameMovieList.querySelectorAll('.item-btn');
+        const itemButtons = activeList.querySelectorAll('.item-btn');
         itemButtons.forEach((btn, index) => {
             const item = currentDisplayItems[index];
             if (!item) return;
@@ -412,18 +549,36 @@ async function loadStep(id, type) {                         // function for upda
     }
 
     // --- 2. Render Title / Name ---
-    currentTitle.innerText = data.title || data.name;
+    const stepTitle = data.title || data.name;
+    currentTitle.innerText = stepTitle;
+    if (currentTitleMobile) currentTitleMobile.innerText = stepTitle;
 
-    // --- 3. Render Cast / Departments UI (Separated into Header Container and List Container) ---
+    // Mirror current poster to mobile
+    if (currentPosterMobile) {
+        currentPosterMobile.innerHTML = currentPoster.innerHTML;
+    }
+
+    // Mirror target info HTML to mobile target info card
+    if (targetInfoMobile && targetInfo) {
+        targetInfoMobile.innerHTML = targetInfo.innerHTML;
+    }
+
+    // --- 3. Render Cast / Departments UI (Routes to Active Desktop or Mobile Container) ---
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
+    const activeTabsWrapper = isMobile ? castDepartmentsMobile : castDepartments;
+    const activeList = isMobile ? nameMovieListMobile : nameMovieList;
+
     castDepartments.innerHTML = '';
     nameMovieList.innerHTML = '';
+    if (castDepartmentsMobile) castDepartmentsMobile.innerHTML = '';
+    if (nameMovieListMobile) nameMovieListMobile.innerHTML = '';
 
     const tabsContainer = document.createElement('div');
     tabsContainer.style.display = 'flex';
     tabsContainer.style.gap = '0px';
     tabsContainer.style.flexWrap = 'wrap';
 
-    castDepartments.appendChild(tabsContainer);
+    if (activeTabsWrapper) activeTabsWrapper.appendChild(tabsContainer);
 
     let name = '';
     let imagePath = null;
@@ -535,8 +690,10 @@ async function loadStep(id, type) {                         // function for upda
 
 
     const renderTabContent = (items, isPersonTarget = false) => {
-        nameMovieList.innerHTML = '';
-        nameMovieList.scrollTop = 0;
+        if (activeList) {
+            activeList.innerHTML = '';
+            activeList.scrollTop = 0;
+        }
 
 
 
@@ -618,7 +775,7 @@ async function loadStep(id, type) {                         // function for upda
                 } else {
                     btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 10px; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
                 }
-                btn.style.width = '100px';
+                btn.style.width = isMobile ? '75px' : '100px';
                 btn.style.aspectRatio = '2 / 3';
                 btn.style.padding = '0';
                 btn.style.overflow = 'hidden';
@@ -642,15 +799,17 @@ async function loadStep(id, type) {                         // function for upda
                 saveStateToHistory();
                 loadStep(item.id, targetType);
             });
-            nameMovieList.appendChild(btn);
+            if (activeList) activeList.appendChild(btn);
         });
 
         applySearchFilter();
     };
 
     const renderCrewGrouped = (items) => {
-        nameMovieList.innerHTML = '';
-        nameMovieList.scrollTop = 0;
+        if (activeList) {
+            activeList.innerHTML = '';
+            activeList.scrollTop = 0;
+        }
 
 
 
@@ -767,7 +926,7 @@ async function loadStep(id, type) {                         // function for upda
             });
             groupContainer.appendChild(btnWrap);
 
-            nameMovieList.appendChild(groupContainer);
+            if (activeList) activeList.appendChild(groupContainer);
         });
 
         applySearchFilter();
@@ -971,7 +1130,7 @@ async function loadStep(id, type) {                         // function for upda
         }
     });
 }
-
+    requestAnimationFrame(() => updateMobileSearchLayout());
     console.log('Data loaded:', data);
     console.log('Goal data:', goalData);
     if (!isRunCompleted) {

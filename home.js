@@ -1,26 +1,17 @@
-const standardStartInput = document.getElementById('standard-search-start');
-const standardGoalInput = document.getElementById('standard-search-goal');
-const standardStartRunBtn = document.getElementById('standard-start-run-btn');
-const standardGoalRandomizeBtn = document.getElementById('standard-goal-randomize-btn');
-const standardStartRandomizeBtn = document.getElementById('standard-start-randomize-btn');
-const standardRunRandomizeBtn = document.getElementById('standard-run-randomize-btn');
-const settingsBtn = document.getElementById('settings-btn');
-const statsBtn = document.getElementById('stats-btn');
+// --- Helper to select all instances of an ID (matches both Desktop & Mobile) ---
+function getAll(id) {
+    return document.querySelectorAll(`[id="${id}"]`);
+}
 
 let randomItems = null;
 let numRandomItems = 200;
 
-
-
-
-
-// fetch top 100 items for each and store the id and media type in the dict
+// Fetch top items
 async function fetchRandomItems() {
     const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) loadingOverlay.style.display = 'flex'; // Show custom loading screen
+    if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
     try {
-        // Helper function to fetch pages dynamically until we collect 100 items after filtering
         async function fetchUntil100(baseUrl, mediaType) {
             let collectedItems = [];
             let page = 1;
@@ -47,13 +38,11 @@ async function fetchRandomItems() {
             return collectedItems;
         }
 
-        // 1. Fetch 100 English Movies
         const movies = await fetchUntil100(
             `https://api.themoviedb.org/3/discover/movie?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
             'movie'
         );
 
-        // 2. Fetch top actors organically by taking a limited slice of sorted cast per movie
         let people = [];
         const seenActorIds = new Set();
         const TOP_ACTORS_PER_MOVIE = 5;
@@ -88,148 +77,136 @@ async function fetchRandomItems() {
             }
         }
 
-        // 3. Fetch 100 English TV Shows
         const tv = await fetchUntil100(
             `https://api.themoviedb.org/3/discover/tv?sort_by=vote_count.desc&api_key=${TMDB_API_KEY}`, 
             'tv'
         );
 
-        // Store everything in a dictionary/object
         const itemDict = {
             movies: movies,
             people: people,
             tv: tv
         };
 
-        console.log(`Successfully fetched ${numRandomItems} items per category:`, itemDict);
         return itemDict;
 
     } finally {
-        // Automatically hide only the custom loading overlay when done
         if (loadingOverlay) {
             loadingOverlay.style.display = 'none';
         }
     }
 }
 
-// if randomItems is not already fetched, fetch it
 if (!randomItems) {
     randomItems = await fetchRandomItems();
 }
 
 
+// --- 1. SEARCH INPUT LISTENERS (Attached to both Desktop & Mobile) ---
+getAll('standard-search-start').forEach(input => {
+    input.addEventListener('input', (e) => {
+        delete inputData[e.target.id];
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => executeSearch(e.target), 500);
+    });
 
-
-
-
-
-// --- Start Input Listeners ---
-standardStartInput.addEventListener('input', (e) => {
-    delete inputData[e.target.id];
-
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => executeSearch(e.target), 500);
-});
-
-standardStartInput.addEventListener('focus', (e) => {
-    if (e.target.value.trim()) {
-        window.executeSearch(e.target);
-    }
-});
-
-
-// --- Goal Input Listeners ---
-standardGoalInput.addEventListener('input', (e) => {
-    delete inputData[e.target.id];
-
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => executeSearch(e.target), 500);
-});
-
-standardGoalInput.addEventListener('focus', (e) => {
-    if (e.target.value.trim()) {
-        window.executeSearch(e.target);
-    }
-});
-
-
-// --- Start Run Button Listener ---
-standardStartRunBtn.addEventListener('click', async () => {
-    window.currentMode = 'STANDARD';
-
-    async function validateInput(inputElement) {
-        const text = inputElement.value.trim();
-        
-        // 1. Check for empty input
-        if (!text) {
-            window.showInputError(inputElement, 'Please enter an item!');
-            return null;
+    input.addEventListener('focus', (e) => {
+        if (e.target.value.trim()) {
+            window.executeSearch(e.target);
         }
+    });
+});
 
-        // 2. Get data from cache or auto-resolve top result
-        let data = inputData[inputElement.id];
-        if (!data) {
-            console.log(`No dropdown selection for [${inputElement.id}]. Auto-resolving top result for: "${text}"`);
-            data = await window.resolveInputData(inputElement);
+getAll('standard-search-goal').forEach(input => {
+    input.addEventListener('input', (e) => {
+        delete inputData[e.target.id];
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => executeSearch(e.target), 500);
+    });
+
+    input.addEventListener('focus', (e) => {
+        if (e.target.value.trim()) {
+            window.executeSearch(e.target);
+        }
+    });
+});
+
+
+// --- 2. START RUN VALIDATION & TRIGGER ---
+getAll('standard-start-run-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        window.currentMode = 'STANDARD';
+
+        // Find the active view (desktop or mobile) this button was clicked inside
+        const currentView = e.target.closest('.app-view');
+        const startInput = currentView.querySelector('#standard-search-start');
+        const goalInput = currentView.querySelector('#standard-search-goal');
+
+        async function validateInput(inputElement) {
+            const text = inputElement.value.trim();
             
-            // 3. Check if search resolution failed (no results)
-            if (!data) {
-                window.showInputError(inputElement, 'No results found!');
+            if (!text) {
+                window.showInputError(inputElement, 'Please enter an item!');
                 return null;
             }
+
+            let data = inputData[inputElement.id];
+            if (!data) {
+                data = await window.resolveInputData(inputElement);
+                if (!data) {
+                    window.showInputError(inputElement, 'No results found!');
+                    return null;
+                }
+            }
+
+            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+            if (mediaFilter === 'no-tv' && data.media_type === 'tv') {
+                window.showInputError(inputElement, 'TV shows are disabled in settings!');
+                return null;
+            }
+            if (mediaFilter === 'no-movies' && data.media_type === 'movie') {
+                window.showInputError(inputElement, 'Movies are disabled in settings!');
+                return null;
+            }
+
+            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_MCU);
+            }
+
+            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_BIG_3);
+            }
+
+            const isBanned = bannedItems.some(b => b.id === data.id && b.media_type === data.media_type);
+            if (isBanned) {
+                window.showInputError(inputElement, 'This item is banned! (Check your settings)');
+                return null;
+            }
+
+            return data;
         }
 
-        // 4. Check if the item is banned
-        const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
-        if (mediaFilter === 'no-tv' && data.media_type === 'tv') {
-            window.showInputError(inputElement, 'TV shows are disabled in settings!');
-            return null;
-        }
-        if (mediaFilter === 'no-movies' && data.media_type === 'movie') {
-            window.showInputError(inputElement, 'Movies are disabled in settings!');
-            return null;
-        }
+        const [startResult, goalResult] = await Promise.all([
+            validateInput(startInput),
+            validateInput(goalInput)
+        ]);
 
+        currentStartData = startResult;
+        currentGoalData = goalResult;
 
-        let  bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
-
-        if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
-            bannedItems = bannedItems.concat(BANNED_MCU);
+        if (!currentStartData || !currentGoalData) {
+            return;
         }
 
-        if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
-            bannedItems = bannedItems.concat(BANNED_BIG_3);
-        }
-
-        const isBanned = bannedItems.some(b => b.id === data.id && b.media_type === data.media_type);
-        if (isBanned) {
-            window.showInputError(inputElement, 'This item is banned! (Check your settings)');
-            return null;
-        }
-
-        return data;
-    }
-
-    // Validate both inputs concurrently so errors render on both fields at the same time
-    const [startResult, goalResult] = await Promise.all([
-        validateInput(standardStartInput),
-        validateInput(standardGoalInput)
-    ]);
-
-    currentStartData = startResult;
-    currentGoalData = goalResult;
-
-    // If either input failed validation, stop the run from starting
-    if (!currentStartData || !currentGoalData) {
-        return;
-    }
-
-    window.switchView('view-standard', { start: currentStartData, goal: currentGoalData });
+        window.switchView('view-standard', { start: currentStartData, goal: currentGoalData });
+    });
 });
 
 
-// Helper function to pick a valid random item and populate an input element
-async function randomizeInput(inputElement) {
+// Helper to pick a random item
+async function randomizeInput(inputElement, otherInputElement) {
     while (true) {
         const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
         const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
@@ -248,9 +225,7 @@ async function randomizeInput(inputElement) {
             continue;
         }
 
-        // ensure the start and goal are not the same item
-        const otherInputElement = inputElement === standardStartInput ? standardGoalInput : standardStartInput;
-        const otherData = inputData[otherInputElement.id];
+        const otherData = otherInputElement ? inputData[otherInputElement.id] : null;
         if (otherData && otherData.id === item.id && otherData.media_type === item.media_type) {
             continue;
         }
@@ -260,7 +235,6 @@ async function randomizeInput(inputElement) {
             continue;
         }
 
-        // Fetch details and populate input + cache
         const details = await window.fetchDetails(item.id, item.media_type);
         inputElement.value = `${details.title || details.name}`;
         inputData[inputElement.id] = details;
@@ -269,34 +243,61 @@ async function randomizeInput(inputElement) {
 }
 
 
-// --- Randomize Button Listeners ---
-standardGoalRandomizeBtn.addEventListener('click', async () => {
-    await randomizeInput(standardGoalInput);
+// --- 3. RANDOMIZE BUTTON LISTENERS ---
+getAll('standard-start-randomize-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        const view = e.target.closest('.app-view');
+        const startInput = view.querySelector('#standard-search-start');
+        const goalInput = view.querySelector('#standard-search-goal');
+        await randomizeInput(startInput, goalInput);
+    });
 });
 
-standardStartRandomizeBtn.addEventListener('click', async () => {
-    await randomizeInput(standardStartInput);
+getAll('standard-goal-randomize-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        const view = e.target.closest('.app-view');
+        const startInput = view.querySelector('#standard-search-start');
+        const goalInput = view.querySelector('#standard-search-goal');
+        await randomizeInput(goalInput, startInput);
+    });
 });
 
-standardRunRandomizeBtn.addEventListener('click', async () => {
-    await randomizeInput(standardStartInput);
-    await randomizeInput(standardGoalInput);
+getAll('standard-run-randomize-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        const view = e.target.closest('.app-view');
+        const startInput = view.querySelector('#standard-search-start');
+        const goalInput = view.querySelector('#standard-search-goal');
+        const startRunBtn = view.querySelector('#standard-start-run-btn');
 
-    // Now that both inputs and their caches are fully populated, trigger the start run
-    standardStartRunBtn.click();
+        await randomizeInput(startInput, goalInput);
+        await randomizeInput(goalInput, startInput);
+
+        startRunBtn.click();
+    });
 });
 
 
-settingsBtn.addEventListener('click', () => {
-    window.switchView('view-settings');
+// --- 4. NAVIGATION BUTTONS (Settings & Stats) ---
+getAll('settings-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        window.switchView('view-settings');
+    });
 });
 
-statsBtn.addEventListener('click', () => {
-    window.switchView('view-stats');
+getAll('stats-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        window.switchView('view-stats');
+    });
 });
 
 window.startRandomRun = async () => {
-    await randomizeInput(standardStartInput);
-    await randomizeInput(standardGoalInput);
-    standardStartRunBtn.click();
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
+    const view = document.getElementById(isMobile ? 'view-home-mobile' : 'view-home');
+    const startInput = view.querySelector('#standard-search-start');
+    const goalInput = view.querySelector('#standard-search-goal');
+    const startRunBtn = view.querySelector('#standard-start-run-btn');
+
+    await randomizeInput(startInput, goalInput);
+    await randomizeInput(goalInput, startInput);
+    startRunBtn.click();
 };

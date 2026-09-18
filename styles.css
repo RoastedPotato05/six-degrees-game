@@ -345,3 +345,19 @@ small { color: #666; }
 }
 
 
+/* Mobile Target Extended Info Scaling */
+#target-info-mobile div {
+  padding: 6px 8px !important;
+  margin-top: 6px !important;
+}
+
+#target-info-mobile span {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  margin-bottom: 6px !important;
+}
+
+#target-info-mobile span.text-gray {
+  font-size: 10px !important;
+  margin-top: -4px !important;
+}
