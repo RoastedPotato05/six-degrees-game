@@ -442,10 +442,10 @@
                     <label style="font-size: 40px; font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">START</label>
                     <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
                         <div style="position: relative; display: flex; align-items: center; flex: 1;">
-                            <input id="standard-search-start" placeholder="Search for a start item..." value="" style="width: 100%; height: 80px; font-size: 40px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                            <input id="standard-search-start" placeholder="Search for a start item..." value="" style="border-radius: 8px; width: 100%; height: 80px; font-size: 40px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
                             <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 80px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
                         </div> 
-                        <button id="standard-start-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                        <button id="standard-start-randomize-btn" class="flex-child primary-purple" style="border-radius: 8px; flex-shrink: 0; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
                             <img src="images/dice.png" style="width: 60px; height: 60px;">
                         </button>
                     </div>
@@ -455,11 +455,11 @@
                     <label style="font-size: 40px; font-family: 'Graphik', sans-serif; font-weight: 500; letter-spacing: 1px; color: #99AABB; margin-bottom: 6px;">GOAL</label>
                     <div class="search-container" style="display: flex; flex-direction: row; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;">
                         <div style="position: relative; display: flex; align-items: center; flex: 1;">
-                            <input id="standard-search-goal" placeholder="Search for a goal item..." value="" style="width: 100%; height: 38px; font-size: 16px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
-                            <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 22px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
+                            <input id="standard-search-goal" placeholder="Search for a goal item..." value="" style="border-radius: 8px; width: 100%; height: 80px; font-size: 40px; font-family: 'Graphik', sans-serif; font-weight: 400; color: #f8f8f8; padding-right: 32px; box-sizing: border-box;" autocomplete="off" />
+                            <button class="clear-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; color: rgba(255, 255, 255, 0.6); background: transparent; border: none; font-size: 80px; font-weight: 600; padding: 0; line-height: 1; display: none;">×</button>
                         </div>
-                        <button id="standard-goal-randomize-btn" class="flex-child primary-purple" style="border-radius: 4px; flex-shrink: 0; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                            <img src="images/dice.png" style="width: 26px; height: 26px;">
+                        <button id="standard-goal-randomize-btn" class="flex-child primary-purple" style="border-radius: 8px; flex-shrink: 0; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <img src="images/dice.png" style="width: 60px; height: 60px;">
                         </button>
                     </div>
                 </div>
@@ -516,36 +516,36 @@
                 <!-- ROW 1: Start Run & Stats -->
                 <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
                     <!-- Start Run (Standard) -->
-                    <button id="standard-start-run-btn" class="primary-orange" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Start Run</span>
+                    <button id="standard-start-run-btn" class="primary-orange" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span style="text-align: center; font-size: 60px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Start Run</span>
                     </button>
                     <!-- Start Run (Detour - Hidden by default) -->
-                    <button id="detour-start-run-btn" class="primary-orange" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: none; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Start Run</span>
+                    <button id="detour-start-run-btn" class="primary-orange" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: none; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span style="font-size: 60px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Start Run</span>
                     </button>
 
                     <!-- Stats Button -->
-                    <button id="stats-btn" class="primary-green" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Stats</span>
+                    <button id="stats-btn" class="primary-green" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span style="font-size: 60px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Stats</span>
                     </button>
                 </div>
 
                 <!-- ROW 2: Randomize (Dice) & Settings -->
                 <div style="display: flex; flex-direction: row; gap: 12px; width: 100%;">
                     <!-- Randomize Run (Standard) -->
-                    <button id="standard-run-randomize-btn" class="primary-purple" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span id="dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 40px; height: 40px;"></span>
+                    <button id="standard-run-randomize-btn" class="primary-purple" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span id="dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 90px; height: 90px;"></span>
                         <span id="random-text" style="display: none;">...</span>
                     </button>
                     <!-- Randomize Run (Detour - Hidden by default) -->
-                    <button id="detour-run-randomize-btn" class="primary-purple" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: none; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span id="detour-dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 34px; height: 34px;"></span>
+                    <button id="detour-run-randomize-btn" class="primary-purple" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: none; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span id="detour-dice-png" style="display: flex; align-items: center; justify-content: center;"><img src="images/dice.png" style="width: 90px; height: 90px;"></span>
                         <span id="detour-random-text" style="display: none;">...</span>
                     </button>
 
                     <!-- Settings Button -->
-                    <button id="settings-btn" class="primary-blue" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
-                        <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Settings</span>
+                    <button id="settings-btn" class="primary-blue" style="flex: 1 1 0; min-width: 0; min-height: 120px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                        <span style="font-size: 60px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Settings</span>
                     </button>
                 </div>
 
