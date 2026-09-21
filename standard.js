@@ -741,15 +741,15 @@ async function loadStep(id, type) {                         // function for upda
             
             if (isPersonTarget) {
                 btn.innerText = item.name || '';
-                btn.style.padding = '6px 10px';
+                btn.style.padding = isMobile ? '16px 24px' : '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = '3px';
+                btn.style.borderRadius = isMobile ? '8px' : '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = '16px';
+                btn.style.fontSize = isMobile ? '48px' : '16px';
                 // hover effect, make the text white and background a lighter shade of gray
                 btn.addEventListener('mouseover', () => {
                     btn.style.color = '#ffffff';
@@ -773,16 +773,16 @@ async function loadStep(id, type) {                         // function for upda
                         btn.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${itemPosterPath}" style="width: 100%; height: 100%; object-fit: cover;">`;
                     }
                 } else {
-                    btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 10px; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
+                    btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${isMobile ? '20px' : '10px'}; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
                 }
-                btn.style.width = isMobile ? '75px' : '100px';
+                btn.style.width = isMobile ? '150px' : '100px';
                 btn.style.aspectRatio = '2 / 3';
                 btn.style.padding = '0';
                 btn.style.overflow = 'hidden';
                 btn.style.display = 'flex';
                 btn.style.cursor = 'pointer';
                 btn.style.border = '2px solid #99AABB';
-                btn.style.borderRadius = '2px';
+                btn.style.borderRadius = isMobile ? '4px' : '2px';
                 // hover effect, make the border white
                 btn.addEventListener('mouseover', () => {
                     btn.style.border = '2px solid #ffffff';
@@ -871,16 +871,16 @@ async function loadStep(id, type) {                         // function for upda
             groupContainer.style.display = 'flex';
             groupContainer.style.flexDirection = 'row';
             groupContainer.style.flexWrap = 'wrap';
-            groupContainer.style.gap = '8px';
+            groupContainer.style.gap = isMobile ? '16px' : '8px';
 
             const headerEl = document.createElement('div');
             headerEl.style.width = '100%';
             headerEl.style.fontFamily = "'Graphik', sans-serif";
             headerEl.style.fontWeight = '600';
-            headerEl.style.fontSize = '16px';
+            headerEl.style.fontSize = isMobile ? '48px' : '16px';
             headerEl.style.color = '#99AABB';
-            headerEl.style.marginTop = isFirstGroup ? '0px' : '16px';
-            headerEl.style.marginBottom = '2px';
+            headerEl.style.marginTop = isFirstGroup ? '0px' : (isMobile ? '32px' : '16px');
+            headerEl.style.marginBottom = isMobile ? '6px' : '2px';
             
             let headerText = job.toUpperCase();
             const jobLower = job.toLowerCase();
@@ -902,21 +902,21 @@ async function loadStep(id, type) {                         // function for upda
             isFirstGroup = false;
 
             const btnWrap = document.createElement('div');
-            btnWrap.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; width: 100%;';
+            btnWrap.style.cssText = `display: flex; flex-wrap: wrap; gap: ${isMobile ? '16px' : '8px'}; width: 100%;`;
             
             groupItems.forEach(item => {
                 const btn = document.createElement('button');
                 btn.className = 'item-btn';
                 btn.innerText = item.name || '';
-                btn.style.padding = '6px 10px';
+                btn.style.padding = isMobile ? '16px 24px' : '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = '3px';
+                btn.style.borderRadius = isMobile ? '8px' : '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = '16px';
+                btn.style.fontSize = isMobile ? '48px' : '16px';
 
                 btn.addEventListener('click', () => {
                     saveStateToHistory();
