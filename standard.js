@@ -741,15 +741,15 @@ async function loadStep(id, type) {                         // function for upda
             
             if (isPersonTarget) {
                 btn.innerText = item.name || '';
-                btn.style.padding = isMobile ? '16px 24px' : '6px 10px';
+                btn.style.padding = isMobile ? '12px 18px' : '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = isMobile ? '8px' : '3px';
+                btn.style.borderRadius = isMobile ? '6px' : '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = isMobile ? '48px' : '16px';
+                btn.style.fontSize = isMobile ? '32px' : '16px';
                 // hover effect, make the text white and background a lighter shade of gray
                 btn.addEventListener('mouseover', () => {
                     btn.style.color = '#ffffff';
@@ -877,9 +877,9 @@ async function loadStep(id, type) {                         // function for upda
             headerEl.style.width = '100%';
             headerEl.style.fontFamily = "'Graphik', sans-serif";
             headerEl.style.fontWeight = '600';
-            headerEl.style.fontSize = isMobile ? '48px' : '16px';
+            headerEl.style.fontSize = isMobile ? '32px' : '16px';
             headerEl.style.color = '#99AABB';
-            headerEl.style.marginTop = isFirstGroup ? '0px' : (isMobile ? '32px' : '16px');
+            headerEl.style.marginTop = isFirstGroup ? '0px' : (isMobile ? '24px' : '16px');
             headerEl.style.marginBottom = isMobile ? '6px' : '2px';
             
             let headerText = job.toUpperCase();
@@ -902,21 +902,21 @@ async function loadStep(id, type) {                         // function for upda
             isFirstGroup = false;
 
             const btnWrap = document.createElement('div');
-            btnWrap.style.cssText = `display: flex; flex-wrap: wrap; gap: ${isMobile ? '16px' : '8px'}; width: 100%;`;
+            btnWrap.style.cssText = `display: flex; flex-wrap: wrap; gap: ${isMobile ? '12px' : '8px'}; width: 100%;`;
             
             groupItems.forEach(item => {
                 const btn = document.createElement('button');
                 btn.className = 'item-btn';
                 btn.innerText = item.name || '';
-                btn.style.padding = isMobile ? '16px 24px' : '6px 10px';
+                btn.style.padding = isMobile ? '12px 18px' : '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = isMobile ? '8px' : '3px';
+                btn.style.borderRadius = isMobile ? '6px' : '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = isMobile ? '48px' : '16px';
+                btn.style.fontSize = isMobile ? '32px' : '16px';
 
                 btn.addEventListener('click', () => {
                     saveStateToHistory();
