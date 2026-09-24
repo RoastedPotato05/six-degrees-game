@@ -122,97 +122,6 @@ let startData;
 let goalData;
 let isRunCompleted = false;
 
-function buildTargetInfo(data, isMobile = false) {
-    if (!data) return '';
-    const goalType = data.media_type;
-    const isTargetNameOnly = localStorage.getItem('target-name-only') === 'true';
-    if (isTargetNameOnly) return '';
-
-    const nameSize = isMobile ? '40px' : '20px';
-    const labelSize = isMobile ? '24px' : '12px';
-    const bottomMargin = isMobile ? '24px' : '16px';
-    const boxBorder = isMobile ? '4px solid #99AABB' : '2px solid #99AABB';
-    const boxPadding = isMobile ? '20px' : '10px';
-    const gapTop = isMobile ? '40px' : '20px';
-
-    if (goalType === 'movie') {
-        const directors = (data.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
-        const topCast = (data.credits?.cast || []).slice(0, 3).map(c => c.name);
-
-        const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: ${bottomMargin}; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${nameSize}; text-align: right;">${d}</span>`).join('');
-        const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: ${bottomMargin}; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${nameSize}; text-align: right;">${c}</span>`).join('');
-
-        return `
-            <div style="border: ${boxBorder}; padding: ${boxPadding};">
-                ${directorsHtml}
-                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${labelSize}; margin-top: -6px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
-            </div>
-            <div style="border: ${boxBorder}; padding: ${boxPadding}; margin-top: ${gapTop};">
-                ${topCastHtml}
-                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${labelSize}; margin-top: -6px; text-align: right;" class="text-gray">CAST</span>
-            </div>
-        `;
-    } else if (goalType === 'tv') {
-        const topCast = (data.credits?.cast || []).slice(0, 5).map(c => c.name);
-        const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: ${bottomMargin}; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${nameSize}; text-align: right;">${c}</span>`).join('');
-
-        return `
-            <div style="border: ${boxBorder}; padding: ${boxPadding};">
-                ${topCastHtml}
-                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${labelSize}; margin-top: -6px; text-align: right;" class="text-gray">CAST</span>
-            </div>
-        `;
-    } else if (goalType === 'person') {
-        const dept = data.known_for_department || '';
-        let rawItems = [];
-        if (dept.toLowerCase() === 'acting') {
-            rawItems = data.credits?.cast || [];
-        } else {
-            rawItems = (data.credits?.crew || [])
-                .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
-        }
-        
-        rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-
-        let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
-
-        if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
-            bannedItems = bannedItems.concat(BANNED_MCU);
-        }
-
-        if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
-            bannedItems = bannedItems.concat(BANNED_BIG_3);
-        }
-
-        const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
-
-        rawItems = rawItems.filter(item => {
-            const itemType = item.media_type || 'movie';
-            if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
-                return false;
-            }
-            if (mediaFilter === 'no-tv' && itemType === 'tv') {
-                return false;
-            }
-            if (mediaFilter === 'no-movies' && itemType === 'movie') {
-                return false;
-            }
-            return true;
-        });
-
-        const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
-        const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: ${bottomMargin}; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${nameSize}; text-align: right;">${i}</span>`).join('');
-
-        return `
-            <div style="border: ${boxBorder}; padding: ${boxPadding};">
-                ${topItemsHtml}
-                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${labelSize}; margin-top: -6px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
-            </div>
-        `;
-    }
-    return '';
-}
-
 export async function initDetour(startDataParam, goalDataParam, detoursDataParam) {
     path = [];
     historyStack = [];
@@ -289,14 +198,93 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
             targetNameMobileText.style.whiteSpace = 'nowrap';
         }
 
-        targetInfo.style.border = 'none';
-        targetInfo.style.padding = '0';
-        targetInfo.innerHTML = buildTargetInfo(goalData, false);
+        if (isTargetNameOnly) {
+            targetInfo.style.border = 'none';
+            targetInfo.innerHTML = '';
+            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
+        }
+        else if (goalType === 'movie') {
+            const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
+            const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
 
-        if (targetInfoMobile) {
-            targetInfoMobile.style.border = 'none';
-            targetInfoMobile.style.padding = '0';
-            targetInfoMobile.innerHTML = buildTargetInfo(goalData, true);
+            const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${directorsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
+                </div>
+                <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'tv') {
+            const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'person') {
+            const dept = goalData.known_for_department || '';
+            let rawItems = [];
+            if (dept.toLowerCase() === 'acting') {
+                rawItems = goalData.credits?.cast || [];
+            } else {
+                rawItems = (goalData.credits?.crew || [])
+                    .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
+            }
+            
+            rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+            // filter out banned items from rawItems
+            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_MCU);
+            }
+
+            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_BIG_3);
+            }
+
+            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+
+            rawItems = rawItems.filter(item => {
+                const itemType = item.media_type || 'movie';
+
+                // Check specific ban lists (user banned items, MCU, Big 3)
+                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
+                    return false;
+                }
+
+                // Check broad media filters from settings
+                if (mediaFilter === 'no-tv' && itemType === 'tv') {
+                    return false;
+                }
+                if (mediaFilter === 'no-movies' && itemType === 'movie') {
+                    return false;
+                }
+
+                return true;
+            });
+
+            const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
+            const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topItemsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
+                </div>
+            `;
         }
     }
 
@@ -386,14 +374,93 @@ export async function initStandard(startDataParam, goalDataParam) {
             targetNameMobileText.style.whiteSpace = 'nowrap';
         }
 
-        targetInfo.style.border = 'none';
-        targetInfo.style.padding = '0';
-        targetInfo.innerHTML = buildTargetInfo(goalData, false);
+        if (isTargetNameOnly) {
+            targetInfo.style.border = 'none';
+            targetInfo.innerHTML = '';
+            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
+        }
+        else if (goalType === 'movie') {
+            const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
+            const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
 
-        if (targetInfoMobile) {
-            targetInfoMobile.style.border = 'none';
-            targetInfoMobile.style.padding = '0';
-            targetInfoMobile.innerHTML = buildTargetInfo(goalData, true);
+            const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${directorsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
+                </div>
+                <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'tv') {
+            const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
+            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+                </div>
+            `;
+        } else if (goalType === 'person') {
+            const dept = goalData.known_for_department || '';
+            let rawItems = [];
+            if (dept.toLowerCase() === 'acting') {
+                rawItems = goalData.credits?.cast || [];
+            } else {
+                rawItems = (goalData.credits?.crew || [])
+                    .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
+            }
+            
+            rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+            // filter out banned items from rawItems
+            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+
+            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_MCU);
+            }
+
+            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_BIG_3);
+            }
+
+            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+
+            rawItems = rawItems.filter(item => {
+                const itemType = item.media_type || 'movie';
+
+                // Check specific ban lists (user banned items, MCU, Big 3)
+                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
+                    return false;
+                }
+
+                // Check broad media filters from settings
+                if (mediaFilter === 'no-tv' && itemType === 'tv') {
+                    return false;
+                }
+                if (mediaFilter === 'no-movies' && itemType === 'movie') {
+                    return false;
+                }
+
+                return true;
+            });
+
+            const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
+            const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
+
+            targetInfo.innerHTML = `
+                <div style="border: 2px solid #99AABB; padding: 10px;">
+                    ${topItemsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
+                </div>
+            `;
         }
     }
 
@@ -491,9 +558,9 @@ async function loadStep(id, type) {                         // function for upda
         currentPosterMobile.innerHTML = currentPoster.innerHTML;
     }
 
-    // Render target info HTML with doubled dimensions on mobile
-    if (targetInfoMobile && goalData) {
-        targetInfoMobile.innerHTML = buildTargetInfo(goalData, true);
+    // Mirror target info HTML to mobile target info card
+    if (targetInfoMobile && targetInfo) {
+        targetInfoMobile.innerHTML = targetInfo.innerHTML;
     }
 
     // --- 3. Render Cast / Departments UI (Routes to Active Desktop or Mobile Container) ---
@@ -674,15 +741,15 @@ async function loadStep(id, type) {                         // function for upda
             
             if (isPersonTarget) {
                 btn.innerText = item.name || '';
-                btn.style.padding = isMobile ? '12px 18px' : '6px 10px';
+                btn.style.padding = '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = isMobile ? '6px' : '3px';
+                btn.style.borderRadius = '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = isMobile ? '32px' : '16px';
+                btn.style.fontSize = '16px';
                 // hover effect, make the text white and background a lighter shade of gray
                 btn.addEventListener('mouseover', () => {
                     btn.style.color = '#ffffff';
@@ -706,16 +773,16 @@ async function loadStep(id, type) {                         // function for upda
                         btn.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${itemPosterPath}" style="width: 100%; height: 100%; object-fit: cover;">`;
                     }
                 } else {
-                    btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${isMobile ? '20px' : '10px'}; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
+                    btn.innerHTML = `<div style="width: 100%; height: 100%; background: #2c3844; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 10px; word-break: break-word; overflow: hidden;">${itemName || 'N/A'}</div>`;
                 }
-                btn.style.width = isMobile ? '150px' : '100px';
+                btn.style.width = isMobile ? '75px' : '100px';
                 btn.style.aspectRatio = '2 / 3';
                 btn.style.padding = '0';
                 btn.style.overflow = 'hidden';
                 btn.style.display = 'flex';
                 btn.style.cursor = 'pointer';
                 btn.style.border = '2px solid #99AABB';
-                btn.style.borderRadius = isMobile ? '4px' : '2px';
+                btn.style.borderRadius = '2px';
                 // hover effect, make the border white
                 btn.addEventListener('mouseover', () => {
                     btn.style.border = '2px solid #ffffff';
@@ -804,16 +871,16 @@ async function loadStep(id, type) {                         // function for upda
             groupContainer.style.display = 'flex';
             groupContainer.style.flexDirection = 'row';
             groupContainer.style.flexWrap = 'wrap';
-            groupContainer.style.gap = isMobile ? '16px' : '8px';
+            groupContainer.style.gap = '8px';
 
             const headerEl = document.createElement('div');
             headerEl.style.width = '100%';
             headerEl.style.fontFamily = "'Graphik', sans-serif";
             headerEl.style.fontWeight = '600';
-            headerEl.style.fontSize = isMobile ? '32px' : '16px';
+            headerEl.style.fontSize = '16px';
             headerEl.style.color = '#99AABB';
-            headerEl.style.marginTop = isFirstGroup ? '0px' : (isMobile ? '24px' : '16px');
-            headerEl.style.marginBottom = isMobile ? '6px' : '2px';
+            headerEl.style.marginTop = isFirstGroup ? '0px' : '16px';
+            headerEl.style.marginBottom = '2px';
             
             let headerText = job.toUpperCase();
             const jobLower = job.toLowerCase();
@@ -835,21 +902,21 @@ async function loadStep(id, type) {                         // function for upda
             isFirstGroup = false;
 
             const btnWrap = document.createElement('div');
-            btnWrap.style.cssText = `display: flex; flex-wrap: wrap; gap: ${isMobile ? '12px' : '8px'}; width: 100%;`;
+            btnWrap.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; width: 100%;';
             
             groupItems.forEach(item => {
                 const btn = document.createElement('button');
                 btn.className = 'item-btn';
                 btn.innerText = item.name || '';
-                btn.style.padding = isMobile ? '12px 18px' : '6px 10px';
+                btn.style.padding = '6px 10px';
                 btn.style.cursor = 'pointer';
                 btn.style.color = '#99AABB';
                 btn.style.backgroundColor = '#303943';
-                btn.style.borderRadius = isMobile ? '6px' : '3px';
+                btn.style.borderRadius = '3px';
                 btn.style.border = 'none';
                 btn.style.fontFamily = "'Graphik', sans-serif";
                 btn.style.fontWeight = '400';
-                btn.style.fontSize = isMobile ? '32px' : '16px';
+                btn.style.fontSize = '16px';
 
                 btn.addEventListener('click', () => {
                     saveStateToHistory();
