@@ -29,6 +29,7 @@ const targetNameMobile = document.getElementById('target-name-mobile');
 const targetInfoMobile = document.getElementById('target-info-mobile');
 const itemSearchMobile = document.getElementById('item-search-mobile');
 const mobileReturnBtn = document.getElementById('standard-mobile-return-btn');
+const mobileUndoBtn = document.getElementById('standard-mobile-undo-btn');
 
 // Hook mobile search input to filter items
 if (itemSearchMobile) {
@@ -1278,6 +1279,10 @@ undoBtn.addEventListener('click', async () => {
             await loadStep(currentStep.id, currentStep.media_type);
         }
     }
+});
+
+mobileUndoBtn.addEventListener('click', async () => {
+    undoBtn.click();
 });
 
 victoryShareBtn.addEventListener('click', () => {
