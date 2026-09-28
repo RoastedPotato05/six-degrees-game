@@ -25,7 +25,7 @@ body {
   */
 
   color: #f8f8f8;
-  background: #202830;
+  background: #161c22;
   
   /* font-size: large; */
 }
@@ -45,6 +45,9 @@ input {
   border: 0px solid #FF8000;
   border-radius: 4px;
   background: #99AABB;
+}
+input::placeholder {
+  color: #666;
 }
 .results {
   list-style: none;
@@ -347,17 +350,6 @@ small { color: #666; }
 
 /* Mobile Target Extended Info Scaling */
 #target-info-mobile div {
-  padding: 6px 8px !important;
-  margin-top: 6px !important;
-}
-
-#target-info-mobile span {
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-  margin-bottom: 6px !important;
-}
-
-#target-info-mobile span.text-gray {
-  font-size: 10px !important;
-  margin-top: -4px !important;
+  padding: 6px 8px;
+  margin-top: 6px;
 }

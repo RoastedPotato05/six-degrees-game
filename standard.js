@@ -199,94 +199,7 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
             targetNameMobileText.style.whiteSpace = 'nowrap';
         }
 
-        if (isTargetNameOnly) {
-            targetInfo.style.border = 'none';
-            targetInfo.innerHTML = '';
-            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
-        }
-        else if (goalType === 'movie') {
-            const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
-            const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
-
-            const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
-            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
-
-            targetInfo.style.border = 'none';
-            targetInfo.style.padding = 0;
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${directorsHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
-                </div>
-                <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
-                    ${topCastHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
-                </div>
-            `;
-        } else if (goalType === 'tv') {
-            const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
-            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
-
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${topCastHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
-                </div>
-            `;
-        } else if (goalType === 'person') {
-            const dept = goalData.known_for_department || '';
-            let rawItems = [];
-            if (dept.toLowerCase() === 'acting') {
-                rawItems = goalData.credits?.cast || [];
-            } else {
-                rawItems = (goalData.credits?.crew || [])
-                    .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
-            }
-            
-            rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-
-            // filter out banned items from rawItems
-            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
-
-            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
-                bannedItems = bannedItems.concat(BANNED_MCU);
-            }
-
-            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
-                bannedItems = bannedItems.concat(BANNED_BIG_3);
-            }
-
-            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
-
-            rawItems = rawItems.filter(item => {
-                const itemType = item.media_type || 'movie';
-
-                // Check specific ban lists (user banned items, MCU, Big 3)
-                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
-                    return false;
-                }
-
-                // Check broad media filters from settings
-                if (mediaFilter === 'no-tv' && itemType === 'tv') {
-                    return false;
-                }
-                if (mediaFilter === 'no-movies' && itemType === 'movie') {
-                    return false;
-                }
-
-                return true;
-            });
-
-            const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
-            const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
-
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${topItemsHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
-                </div>
-            `;
-        }
+        renderTargetInfo(goalData);
     }
 
     if (startData) {
@@ -375,94 +288,7 @@ export async function initStandard(startDataParam, goalDataParam) {
             targetNameMobileText.style.whiteSpace = 'nowrap';
         }
 
-        if (isTargetNameOnly) {
-            targetInfo.style.border = 'none';
-            targetInfo.innerHTML = '';
-            if (targetInfoMobile) targetInfoMobile.innerHTML = '';
-        }
-        else if (goalType === 'movie') {
-            const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
-            const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
-
-            const directorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
-            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
-
-            targetInfo.style.border = 'none';
-            targetInfo.style.padding = 0;
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${directorsHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
-                </div>
-                <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
-                    ${topCastHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
-                </div>
-            `;
-        } else if (goalType === 'tv') {
-            const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
-            const topCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
-
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${topCastHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
-                </div>
-            `;
-        } else if (goalType === 'person') {
-            const dept = goalData.known_for_department || '';
-            let rawItems = [];
-            if (dept.toLowerCase() === 'acting') {
-                rawItems = goalData.credits?.cast || [];
-            } else {
-                rawItems = (goalData.credits?.crew || [])
-                    .filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
-            }
-            
-            rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
-
-            // filter out banned items from rawItems
-            let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
-
-            if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
-                bannedItems = bannedItems.concat(BANNED_MCU);
-            }
-
-            if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
-                bannedItems = bannedItems.concat(BANNED_BIG_3);
-            }
-
-            const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
-
-            rawItems = rawItems.filter(item => {
-                const itemType = item.media_type || 'movie';
-
-                // Check specific ban lists (user banned items, MCU, Big 3)
-                if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) {
-                    return false;
-                }
-
-                // Check broad media filters from settings
-                if (mediaFilter === 'no-tv' && itemType === 'tv') {
-                    return false;
-                }
-                if (mediaFilter === 'no-movies' && itemType === 'movie') {
-                    return false;
-                }
-
-                return true;
-            });
-
-            const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
-            const topItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
-
-            targetInfo.innerHTML = `
-                <div style="border: 2px solid #99AABB; padding: 10px;">
-                    ${topItemsHtml}
-                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
-                </div>
-            `;
-        }
+        renderTargetInfo(goalData);
     }
 
     if (startData) {
@@ -473,6 +299,173 @@ window.initStandard = initStandard;
 
 
 
+function renderTargetInfo(goalData) {
+    if (!goalData) return;
+
+    const isTargetNameOnly = localStorage.getItem('target-name-only') === 'true';
+
+    if (isTargetNameOnly) {
+        if (targetInfo) {
+            targetInfo.style.border = 'none';
+            targetInfo.innerHTML = '';
+        }
+        if (targetInfoMobile) {
+            targetInfoMobile.style.border = 'none';
+            targetInfoMobile.innerHTML = '';
+        }
+        return;
+    }
+
+    const goalType = goalData.media_type;
+
+    if (goalType === 'movie') {
+        const directors = (goalData.credits?.crew || []).filter(c => c.job === 'Director').map(c => c.name);
+        const topCast = (goalData.credits?.cast || []).slice(0, 3).map(c => c.name);
+
+        const desktopDirectorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${d}</span>`).join('');
+        const desktopTopCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: right;">${c}</span>`).join('');
+
+        const mobileDirectorsHtml = directors.map(d => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: center;">${d}</span>`).join('');
+        const mobileTopCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: center;">${c}</span>`).join('');
+
+        const desktopMovieHtml = `
+            <div style="border: 2px solid #99AABB; padding: 10px;">
+                ${desktopDirectorsHtml}
+                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">DIRECTOR(S)</span>
+            </div>
+            <div style="border: 2px solid #99AABB; padding: 10px; margin-top: 20px;">
+                ${desktopTopCastHtml}
+                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+            </div>
+        `;
+
+        const mobileMovieHtml = `
+            <div style="display: flex; flex-direction: column; width: 90%;">
+                <div style="border: 2px solid #99AABB; display: flex; flex: 0 0 auto; flex-direction: column; justify-content: center; align-items: center; white-space: nowrap;">
+                    ${mobileDirectorsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; margin-top: -10px; text-align: center;" class="text-gray">DIRECTOR(S)</span>
+                </div>
+                <div style="border: 2px solid #99AABB; display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; align-items: center;">
+                    ${mobileTopCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; margin-top: -10px; text-align: center;" class="text-gray">CAST</span>
+                </div>
+            </div>
+        `;
+
+        // Desktop
+        if (targetInfo) {
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = desktopMovieHtml;
+        }
+
+        // Mobile
+        if (targetInfoMobile) {
+            targetInfoMobile.style.border = 'none';
+            targetInfoMobile.style.padding = 0;
+            targetInfoMobile.innerHTML = mobileMovieHtml;
+        }
+
+    } else if (goalType === 'tv') {
+        const topCast = (goalData.credits?.cast || []).slice(0, 5).map(c => c.name);
+
+        const desktopTopCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${c}</span>`).join('');
+        const mobileTopCastHtml = topCast.map(c => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: center;">${c}</span>`).join('');
+
+        const desktopTvHtml = `
+            <div style="border: 2px solid #99AABB; padding: 10px;">
+                ${desktopTopCastHtml}
+                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">CAST</span>
+            </div>
+        `;
+
+        const mobileTvHtml = `
+            <div style="display: flex; flex-direction: column; width: 90%;">
+                <div style="border: 2px solid #99AABB; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px;">
+                    ${mobileTopCastHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; margin-top: -10px; text-align: center;" class="text-gray">CAST</span>
+                </div>
+            </div>
+        `;
+
+        // Desktop
+        if (targetInfo) {
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = desktopTvHtml;
+        }
+
+        // Mobile
+        if (targetInfoMobile) {
+            targetInfoMobile.style.border = 'none';
+            targetInfoMobile.style.padding = 0;
+            targetInfoMobile.innerHTML = mobileTvHtml;
+        }
+
+    } else if (goalType === 'person') {
+        const dept = goalData.known_for_department || '';
+        let rawItems = [];
+        if (dept.toLowerCase() === 'acting') {
+            rawItems = goalData.credits?.cast || [];
+        } else {
+            rawItems = (goalData.credits?.crew || []).filter(c => c.department && c.department.toLowerCase() === dept.toLowerCase());
+        }
+
+        rawItems.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
+
+        let bannedItems = JSON.parse(localStorage.getItem('bannedItems') || '[]');
+        if (localStorage.getItem('no-mcu') === 'true' && typeof BANNED_MCU !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_MCU);
+        }
+        if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_BIG_3);
+        }
+
+        const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
+        rawItems = rawItems.filter(item => {
+            const itemType = item.media_type || 'movie';
+            if (bannedItems.some(b => b.id === item.id && b.media_type === itemType)) return false;
+            if (mediaFilter === 'no-tv' && itemType === 'tv') return false;
+            if (mediaFilter === 'no-movies' && itemType === 'movie') return false;
+            return true;
+        });
+
+        const topItems = rawItems.slice(0, 5).map(c => c.title || c.name);
+
+        const desktopTopItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 22px; text-align: right;">${i}</span>`).join('');
+        const mobileTopItemsHtml = topItems.map(i => `<span style="display: block; line-height: 1.2; margin-bottom: 16px; color: #884e88; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 20px; text-align: center;">${i}</span>`).join('');
+
+        const desktopPersonHtml = `
+            <div style="border: 2px solid #99AABB; padding: 10px;">
+                ${desktopTopItemsHtml}
+                <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; margin-top: -10px; text-align: right;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
+            </div>
+        `;
+
+        const mobilePersonHtml = `
+            <div style="display: flex; flex-direction: column; width: 90%;">
+                <div style="border: 2px solid #99AABB; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px;">
+                    ${mobileTopItemsHtml}
+                    <span style="display: block; font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; margin-top: -10px; text-align: center;" class="text-gray">KNOWN FOR ${dept.toUpperCase()}</span>
+                </div>
+            </div>
+        `;
+
+        // Desktop
+        if (targetInfo) {
+            targetInfo.style.border = 'none';
+            targetInfo.style.padding = 0;
+            targetInfo.innerHTML = desktopPersonHtml;
+        }
+
+        // Mobile
+        if (targetInfoMobile) {
+            targetInfoMobile.style.border = 'none';
+            targetInfoMobile.style.padding = 0;
+            targetInfoMobile.innerHTML = mobilePersonHtml;
+        }
+    }
+}
 
 let currentDisplayItems = [];
 let currentIsPersonTarget = false;
@@ -559,10 +552,7 @@ async function loadStep(id, type) {                         // function for upda
         currentPosterMobile.innerHTML = currentPoster.innerHTML;
     }
 
-    // Mirror target info HTML to mobile target info card
-    if (targetInfoMobile && targetInfo) {
-        targetInfoMobile.innerHTML = targetInfo.innerHTML;
-    }
+    
 
     // --- 3. Render Cast / Departments UI (Routes to Active Desktop or Mobile Container) ---
     const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
