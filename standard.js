@@ -575,7 +575,8 @@ async function loadStep(id, type) {                         // function for upda
     let imagePath = null;
     let subText = '';
 
-    document.getElementById('item-search').value = '';
+    itemSearch.value = '';
+    itemSearchMobile.value = '';
 
     if (data.media_type === 'movie') {
         name = data.title || data.original_title;
