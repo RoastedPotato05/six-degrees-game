@@ -1,4 +1,10 @@
+function getStatsElement(id) {
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
+    return document.getElementById(isMobile ? `${id}-mobile` : id) || document.getElementById(id);
+}
+
 export async function initStats() {
+    const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
     // Fetch stats data from the server
     window.updateGraph([]);
     // this updates the graph on opening stats remove if that becomes an issue (it will go back to only updating on run complete)
@@ -16,7 +22,7 @@ export async function initStats() {
     };
     console.log('Stats data retrieved from localStorage:', stats);
 
-    const graphContainer = document.getElementById('stats-graph');
+    const graphContainer = getStatsElement('stats-graph');
     if (graphContainer) {
         // Only inject the inner DOM structure if it doesn't already exist
         if (!graphContainer.querySelector('#sigma-canvas-wrapper')) {
@@ -37,9 +43,6 @@ export async function initStats() {
     }
 
     renderStatsGraph();
-    if (window.sigmaInstance) {
-        window.sigmaInstance.refresh();
-    }
 
     // 3. Render graph if data exists
     renderStatsGraph();
@@ -54,17 +57,16 @@ export async function initStats() {
     let slowestTime = stats.slowestTime || 0;
     let savedRuns = stats.savedRuns || [];
     renderStatsGraph();
-    window.sigmaInstance?.refresh();
 
     // Update the stats display
-    document.getElementById('wins').textContent = wins;
-    document.getElementById('win-streak').textContent = winStreak;
-    document.getElementById('shortest-path').textContent = shortestPath;
-    document.getElementById('average-path').textContent = averagePath.toFixed(3);
-    document.getElementById('longest-path').textContent = longestPath;
-    document.getElementById('fastest-time').textContent = window.msToTime(fastestTime);
-    document.getElementById('average-time').textContent = window.msToTime(averageTime);
-    document.getElementById('slowest-time').textContent = window.msToTime(slowestTime);
+    getStatsElement('wins').textContent = wins;
+    getStatsElement('win-streak').textContent = winStreak;
+    getStatsElement('shortest-path').textContent = shortestPath;
+    getStatsElement('average-path').textContent = averagePath.toFixed(3);
+    getStatsElement('longest-path').textContent = longestPath;
+    getStatsElement('fastest-time').textContent = window.msToTime(fastestTime);
+    getStatsElement('average-time').textContent = window.msToTime(averageTime);
+    getStatsElement('slowest-time').textContent = window.msToTime(slowestTime);
 
 
 
@@ -114,7 +116,7 @@ export async function initStats() {
     //     });
     // }
 
-    const container = document.getElementById('saved-runs-container');
+    const container = getStatsElement('saved-runs-container');
     if (!container) return;
 
     
@@ -168,12 +170,17 @@ export async function initStats() {
         const pathLength = run.path ? run.path.length - 1 : 0;
         const gamemode = run.gamemode || 'STANDARD';
         const gamemodeClass = gamemode === 'STANDARD' ? 'text-orange' : (gamemode === 'DETOUR' ? 'text-green' : 'text-purple');
+        const posterWidth = isMobile ? 45 : 56;
+        const posterHeight = isMobile ? 68 : 84;
+        const itemTitleSize = isMobile ? 12 : 16;
+        const itemMetaSize = isMobile ? 10 : 13;
+        const itemYearSize = isMobile ? 10 : 12;
 
         const renderItemSide = (item, isGoal = false) => {
             if (!item) return '';
             const imgHtml = item.imageUrl 
-                ? `<img src="${item.imageUrl}" style="width: 56px; height: 84px; object-fit: cover; border-radius: 2px; flex-shrink: 0;" />`
-                : `<div style="width: 56px; height: 84px; background: #2c3844; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #99AABB; flex-shrink: 0;">N/A</div>`;
+                ? `<img src="${item.imageUrl}" style="width: ${posterWidth}px; height: ${posterHeight}px; object-fit: cover; border-radius: 2px; flex-shrink: 0;" />`
+                : `<div style="width: ${posterWidth}px; height: ${posterHeight}px; background: #2c3844; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: ${itemMetaSize}px; color: #99AABB; flex-shrink: 0;">N/A</div>`;
             
             const title = item.title || item.name || 'Unknown';
             const subText = item.media_type.toUpperCase() || '';
@@ -183,9 +190,9 @@ export async function initStats() {
                 return `
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-end; text-align: right; flex: 1; overflow: hidden; min-width: 0;">
                         <div style="overflow: hidden; display: flex; flex-direction: column; align-items: flex-end; flex: 1; min-width: 0;">
-                            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #f8f8f8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; width: 100%;">Titled: ${title}</div>
-                            ${subText ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 13px; color: #99AABB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">Sub: ${subText}</div>` : ''}
-                            ${year ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; color: #99AABB;">${year}</div>` : ''}
+                            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${itemTitleSize}px; color: #f8f8f8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; width: 100%;">Titled: ${title}</div>
+                            ${subText ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${itemMetaSize}px; color: #99AABB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">Sub: ${subText}</div>` : ''}
+                            ${year ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${itemYearSize}px; color: #99AABB;">${year}</div>` : ''}
                         </div>
                         ${imgHtml}
                     </div>
@@ -195,9 +202,9 @@ export async function initStats() {
                     <div style="display: flex; align-items: center; gap: 10px; justify-content: flex-start; text-align: left; flex: 1; overflow: hidden; min-width: 0;">
                         ${imgHtml}
                         <div style="overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; flex: 1; min-width: 0;">
-                            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #f8f8f8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; width: 100%;">${title}</div>
-                            ${subText ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 13px; color: #99AABB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${subText}</div>` : ''}
-                            ${year ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 12px; color: #99AABB;">${year}</div>` : ''}
+                            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${itemTitleSize}px; color: #f8f8f8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; width: 100%;">${title}</div>
+                            ${subText ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${itemMetaSize}px; color: #99AABB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">${subText}</div>` : ''}
+                            ${year ? `<div style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${itemYearSize}px; color: #99AABB;">${year}</div>` : ''}
                         </div>
                     </div>
                 `;
@@ -215,12 +222,12 @@ export async function initStats() {
 
         headerDiv.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px; color: #f8f8f8; letter-spacing: 1px;">
+                <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${isMobile ? 23 : 40}px; color: #f8f8f8; letter-spacing: ${isMobile ? 0 : 1}px;">
                     <span class="text-green">${timeObj.minutes}</span>:<span class="text-orange">${timeObj.seconds}</span>.<span class="text-purple">${timeObj.milliseconds}</span>
                 </span>
                 <div style="display: flex; flex-direction: column; gap: 1px;">
-                    <span style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 14px; color: #99AABB;">Length: ${pathLength}</span>
-                    <span class="${gamemodeClass}" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 14px;">${gamemode}</span>
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: ${isMobile ? 10 : 14}px; color: #99AABB;">Length: ${pathLength}</span>
+                    <span class="${gamemodeClass}" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${isMobile ? 11 : 14}px;">${gamemode}</span>
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
@@ -244,7 +251,7 @@ export async function initStats() {
 
         detailsPreviewDiv.innerHTML = `
             ${renderItemSide(run.start, false)}
-            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 24px; color: #99AABB; padding: 0 10px; flex-shrink: 0;">➔</div>
+            <div style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: ${isMobile ? 18 : 24}px; color: #99AABB; padding: 0 ${isMobile ? 4 : 10}px; flex-shrink: 0;">➔</div>
             ${renderItemSide(run.goal, true)}
         `;
 
@@ -370,7 +377,9 @@ window.initStats = initStats;
 
 
 
-const statsReturnBtn = document.getElementById('stats-return-btn');
+const statsReturnBtn = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000)
+    ? document.querySelector('#app-footer-mobile #stats-return-btn')
+    : document.querySelector('#app-footer #stats-return-btn');
 if (statsReturnBtn) {
     statsReturnBtn.addEventListener('click', () => {
         window.switchView('view-home');
@@ -381,7 +390,9 @@ if (statsReturnBtn) {
 let clearConfirmTimeout = null;
 let isConfirmingClear = false;
 
-const statsClearBtn = document.getElementById('stats-clear-btn');
+const statsClearBtn = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000)
+    ? document.querySelector('#app-footer-mobile #stats-clear-btn')
+    : document.querySelector('#app-footer #stats-clear-btn');
 if (statsClearBtn) {
     statsClearBtn.addEventListener('click', () => {
         if (!isConfirmingClear) {
@@ -453,7 +464,7 @@ if (statsClearBtn) {
 
 
 export function renderStatsGraph() {
-    const container = document.getElementById("stats-graph");
+    const container = getStatsElement("stats-graph");
     if (!container) return;
 
     const wrapper = container.querySelector("#sigma-canvas-wrapper");

@@ -1474,11 +1474,6 @@ export function updateGraph(path) {
         runConcentricLayout(currentCenterNode);
     }
 
-    // If stats tab is already active in the background, refresh canvas rendering directly
-    if (sigmaInstance) {
-        sigmaInstance.refresh();
-    }
-
     saveGraph();
 }
 
@@ -1490,8 +1485,15 @@ export function mountStatsGraph(container) {
     const canvasTarget = container.querySelector('#sigma-canvas-wrapper') || container;
 
     if (sigmaInstance) {
-        sigmaInstance.refresh();
-        return;
+        if (sigmaInstance.getContainer() === canvasTarget) {
+            if (canvasTarget.clientWidth > 0 && canvasTarget.clientHeight > 0) {
+                sigmaInstance.refresh();
+            }
+            return;
+        }
+
+        sigmaInstance.kill();
+        sigmaInstance = null;
     }
 
     sigmaInstance = new Sigma(graph, canvasTarget, {
@@ -1649,11 +1651,10 @@ export function mountStatsGraph(container) {
 window.sigmaInstance = sigmaInstance;
 
 sigmaInstance.on("afterRender", () => {
-    const canvases = sigmaInstance.getCanvases();
-    if (!canvases || !canvases.labels) return;
+    const labelCanvasContext = sigmaInstance.canvasContexts && sigmaInstance.canvasContexts.labels;
+    if (!labelCanvasContext) return;
     
-    const context = canvases.labels.getContext("2d");
-    if (!context) return;
+    const context = labelCanvasContext;
 
     const camera = sigmaInstance.getCamera();
     const ratio = camera.getState().ratio;
@@ -2180,6 +2181,3 @@ window.tInterval = tInterval;
 window.difference = difference;
 window.updatedTime = updatedTime;
 window.gamemodes = gamemodes;
-
-
-

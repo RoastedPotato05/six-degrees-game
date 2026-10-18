@@ -635,13 +635,53 @@
     </div>
 
     <!-- PLACEHOLDER 2: Mobile Statistics Screen -->
-    <div id="view-stats-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px; padding-bottom: 30px;">
-        <div style="display: flex; justify-content: center; align-items: center; padding: 10px 0; border-bottom: 2px solid #2c3844;">
-            <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(28px, 8vw, 42px); color: #659157;">STATISTICS</span>
+    <div id="view-stats-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box;">
+        <div style="display: flex; flex-direction: row; gap: 10px; align-items: center; width: 100%; height: 50px; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; background-color: #161c22;">
+            <div style="width: 25%; min-width: 90px;"></div>
+            <span style="display: flex; justify-content: center; width: 50%; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 24px; color: #659157; letter-spacing: 0.5px; white-space: nowrap;">STATS</span>
+            <div style="width: 25%; min-width: 90px;"></div>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; min-height: 200px; gap: 16px; margin-top: 40px; text-align: center;">
-            <span style="font-family: 'Graphik', sans-serif; font-size: 20px; color: #99AABB;">Stats (Mobile)</span>
-            <span style="font-family: 'Graphik', sans-serif; font-size: 15px; color: #99AABB;">work in progress sorryyyyyyy</span>
+
+        <div style="display: flex; flex-direction: column; gap: 28px; padding: 14px; box-sizing: border-box; width: 100%;">
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;" class="text-green">RECORDS</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 14px;">
+                    <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; flex: 1; border: 2px solid #99AABB; padding: 8px; align-items: center; box-sizing: border-box;">
+                            <span style="font-family: 'Graphik', sans-serif; font-size: 20px; color: #99AABB;">WINS:</span><span id="wins-mobile" class="text-green" style="font-family: 'Graphik', sans-serif; font-size: 24px; margin-left: 8px;">0</span>
+                        </div>
+                        <div style="display: flex; flex: 1; border: 2px solid #99AABB; padding: 8px; align-items: center; box-sizing: border-box;">
+                            <span style="font-family: 'Graphik', sans-serif; font-size: 20px; color: #99AABB;">STREAK:</span><span id="win-streak-mobile" class="text-blue" style="font-family: 'Graphik', sans-serif; font-size: 24px; margin-left: 8px;">0</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="shortest-path-mobile" class="text-green" style="font-family: 'Graphik', sans-serif; font-size: 25px;">0</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">SHORTEST PATH</span></div>
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="average-path-mobile" class="text-orange" style="font-family: 'Graphik', sans-serif; font-size: 25px;">0</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">AVERAGE PATH</span></div>
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="longest-path-mobile" class="text-blue" style="font-family: 'Graphik', sans-serif; font-size: 25px;">0</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">LONGEST PATH</span></div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="fastest-time-mobile" class="text-green" style="font-family: 'Graphik', sans-serif; font-size: 19px;">00:00.000</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">FASTEST TIME</span></div>
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="average-time-mobile" class="text-orange" style="font-family: 'Graphik', sans-serif; font-size: 19px;">00:00.000</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">AVERAGE TIME</span></div>
+                        <div style="display: flex; flex: 1; flex-direction: column; border: 2px solid #99AABB; padding: 8px; box-sizing: border-box;"><span id="slowest-time-mobile" class="text-blue" style="font-family: 'Graphik', sans-serif; font-size: 19px;">00:00.000</span><span style="font-family: 'Graphik', sans-serif; font-size: 11px; color: #99AABB;">SLOWEST TIME</span></div>
+                    </div>
+                </div>
+                <div id="stats-graph-mobile" style="justify-content: center; margin-top: 16px; height: 360px; border: 2px solid #99AABB; box-sizing: border-box; display: flex; position: relative; width: 100%; overflow: hidden;">
+                    <div id="stats-graph-container-text-mobile" style="font-family: 'Graphik', sans-serif; font-size: 16px; color: #99AABB; justify-content: center; align-items: center; display: flex; height: 100%; box-sizing: border-box;"></div>
+                </div>
+            </section>
+
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;" class="text-blue">SAVED RUNS</span>
+                </div>
+                <div id="saved-runs-container-mobile" style="margin-top: 14px; min-height: 180px; border: 2px solid #99AABB; box-sizing: border-box;">
+                    <div id="saved-runs-container-text-mobile" style="font-family: 'Graphik', sans-serif; font-size: 16px; color: #99AABB; justify-content: center; align-items: center; display: flex; min-height: 180px; box-sizing: border-box;">
+                        <span>Saved runs will appear here</span>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 

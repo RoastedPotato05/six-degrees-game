@@ -1262,8 +1262,6 @@ function runComplete() {
     let stats = JSON.parse(localStorage.getItem('stats')) || {};
 
 
-    window.updateGraph(path);
-
     stats.wins = (stats.wins || 0) + 1;
 
     stats.winStreak = (stats.winStreak || 0) + 1;
@@ -1311,6 +1309,8 @@ function runComplete() {
     }
 
     localStorage.setItem('stats', JSON.stringify(stats));
+
+    window.updateGraph(path);
 
 
     // hide target info and replace with victory buttons
