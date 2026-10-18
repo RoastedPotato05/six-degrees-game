@@ -17,7 +17,7 @@ const victoryRandomizeBtn = document.getElementById('victory-randomize-btn');
 const victorySaveBtn = document.getElementById('victory-save-btn');
 const victoryShareBtn = document.getElementById('victory-share-btn');
 const victoryDiv = document.getElementById('victory-div');
-
+ 
 // Mobile Elements
 const currentTitleMobile = document.getElementById('current-title-mobile');
 const currentPosterMobile = document.getElementById('current-poster-mobile');
@@ -30,6 +30,11 @@ const targetInfoMobile = document.getElementById('target-info-mobile');
 const itemSearchMobile = document.getElementById('item-search-mobile');
 const mobileReturnBtn = document.getElementById('standard-mobile-return-btn');
 const mobileUndoBtn = document.getElementById('standard-mobile-undo-btn');
+const pathDropdownBar = document.getElementById('path-dropdown-bar');
+const pathPreviewMobile = document.getElementById('path-preview-mobile');
+const pathPreviewFade = document.getElementById('path-preview-fade');
+const pathExtendedInfo = document.getElementById('path-extended-info');
+const pathDropdownArrow = document.getElementById('path-dropdown-arrow');
 
 // Hook mobile search input to filter items
 if (itemSearchMobile) {
@@ -108,6 +113,16 @@ if (targetDropdownBar) {
     });
 }
 
+if (pathDropdownBar) {
+    pathDropdownBar.addEventListener('click', () => {
+        const isClosed = pathExtendedInfo.style.display === 'none';
+        pathExtendedInfo.style.display = isClosed ? 'flex' : 'none';
+        pathDropdownArrow.style.transform = isClosed ? 'translateY(-50%) scale(1, -1)' : 'translateY(-50%) scale(1, 1)';
+        pathPreviewMobile.style.display = isClosed ? 'none' : 'flex';
+        pathPreviewFade.style.display = isClosed ? 'none' : 'block';
+    });
+}
+
 // Ensure list container maintains the wrap layout and scrolling properties
 nameMovieList.style.display = 'flex';
 nameMovieList.style.flexDirection = 'row';
@@ -123,6 +138,67 @@ let startData;
 let goalData;
 let isRunCompleted = false;
 
+function renderMobilePath() {
+    if (!pathPreviewMobile || !pathExtendedInfo) return;
+
+    pathPreviewMobile.innerHTML = '';
+    pathExtendedInfo.innerHTML = '';
+
+    path.forEach((pathItem, idx) => {
+        const previewItem = document.createElement('span');
+        previewItem.textContent = pathItem.name;
+        previewItem.style.flexShrink = '0';
+        pathPreviewMobile.appendChild(previewItem);
+
+        if (idx < path.length - 1) {
+            const previewArrow = document.createElement('span');
+            previewArrow.textContent = '→';
+            previewArrow.style.color = '#99AABB';
+            previewArrow.style.flexShrink = '0';
+            pathPreviewMobile.appendChild(previewArrow);
+        }
+
+        const itemButton = document.createElement('button');
+        itemButton.className = 'item-btn';
+        itemButton.textContent = pathItem.name;
+        itemButton.title = pathItem.name;
+        itemButton.style.padding = '4px 8px';
+        itemButton.style.cursor = 'pointer';
+        itemButton.style.color = '#99AABB';
+        itemButton.style.backgroundColor = '#303943';
+        itemButton.style.borderRadius = '3px';
+        itemButton.style.border = 'none';
+        itemButton.style.fontFamily = "'Graphik', sans-serif";
+        itemButton.style.fontWeight = '400';
+        itemButton.style.fontSize = '14px';
+        itemButton.addEventListener('mouseover', () => {
+            itemButton.style.color = '#ffffff';
+            itemButton.style.backgroundColor = '#3a4752';
+            itemButton.style.transition = 'color 0.1s ease-in-out, background-color 0.1s ease-in-out';
+        });
+        itemButton.addEventListener('mouseout', () => {
+            itemButton.style.color = '#99AABB';
+            itemButton.style.backgroundColor = '#303943';
+        });
+        itemButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            saveStateToHistory();
+            loadStep(pathItem.id, pathItem.media_type);
+        });
+        pathExtendedInfo.appendChild(itemButton);
+
+        if (idx < path.length - 1) {
+            const arrow = document.createElement('span');
+            arrow.textContent = '→';
+            arrow.style.color = '#99AABB';
+            arrow.style.fontFamily = "'Graphik', sans-serif";
+            arrow.style.fontSize = '18px';
+            arrow.style.alignSelf = 'center';
+            pathExtendedInfo.appendChild(arrow);
+        }
+    });
+}
+
 export async function initDetour(startDataParam, goalDataParam, detoursDataParam) {
     path = [];
     historyStack = [];
@@ -130,6 +206,11 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
     if (window.reset) window.reset();
     if (window.start) window.start();
     if (pathContainer) pathContainer.innerHTML = '';
+    renderMobilePath();
+    if (pathExtendedInfo) pathExtendedInfo.style.display = 'none';
+    if (pathPreviewMobile) pathPreviewMobile.style.display = 'flex';
+    if (pathPreviewFade) pathPreviewFade.style.display = 'block';
+    if (pathDropdownArrow) pathDropdownArrow.style.transform = 'translateY(-50%) scale(1, 1)';
     if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
@@ -220,6 +301,11 @@ export async function initStandard(startDataParam, goalDataParam) {
     if (window.reset) window.reset();
     if (window.start) window.start();
     if (pathContainer) pathContainer.innerHTML = '';
+    renderMobilePath();
+    if (pathExtendedInfo) pathExtendedInfo.style.display = 'none';
+    if (pathPreviewMobile) pathPreviewMobile.style.display = 'flex';
+    if (pathPreviewFade) pathPreviewFade.style.display = 'block';
+    if (pathDropdownArrow) pathDropdownArrow.style.transform = 'translateY(-50%) scale(1, 1)';
     if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
@@ -633,6 +719,7 @@ async function loadStep(id, type) {                         // function for upda
             path.push(newItem);
         }
 
+        renderMobilePath();
         pathContainer.innerHTML = '';
         pathContainer.style.display = 'flex';
         pathContainer.style.flexDirection = 'column';
@@ -1286,6 +1373,3 @@ victoryShareBtn.addEventListener('click', () => {
         shareText.innerText = 'Copied to clipboard!';
     }
 });
-
-
-
