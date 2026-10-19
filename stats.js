@@ -409,6 +409,8 @@ if (statsClearBtn) {
                     position: fixed;
                     left: ${rect.left + (rect.width / 2)}px;
                     bottom: ${window.innerHeight - rect.top + 12}px;
+                    width: ${statsClearBtn.id === 'stats-clear-btn' && window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000) ? `${rect.width}px` : 'auto'};
+                    box-sizing: border-box;
                     transform: translateX(-50%);
                     background-color: #161c22;
                     border: 4px solid #edae49;

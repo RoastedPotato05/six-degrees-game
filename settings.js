@@ -225,6 +225,10 @@ exportDataBtns.forEach((exportDataBtn) => {
                 messageContainer.style.position = 'relative';
             }
             messageContainer.appendChild(message);
+            if (exportDataBtn.id.endsWith('-mobile')) {
+                message.style.width = '100%';
+                message.style.boxSizing = 'border-box';
+            }
         }
 
         try {
