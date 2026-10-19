@@ -46,7 +46,8 @@ input {
   border-radius: 4px;
   background: #99AABB;
 }
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: #666;
 }
 .results {

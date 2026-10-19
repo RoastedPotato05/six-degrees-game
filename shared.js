@@ -803,11 +803,28 @@ let difference = 0;
 let updatedTime = 0;
 let gamemodes = ["STANDARD", "DETOUR", "ENDLESS"];
 let sigmaInstance = null;
-let lastCenterNodeId = null;
+let lastCenterNodeKey = null;
 let hoveredNodes = new Set();
 let hoveredNeighbors = new Set();
 let selectedNodes = new Set();       // <-- Tracks multiple selected nodes
 let selectedNeighbors = new Set();   // <-- Tracks neighbors of all selected nodes
+
+function getGraphNodeKey(item) {
+    return `${item.media_type}:${item.id}`;
+}
+
+function getGraphNodeColor(mediaType) {
+    switch (mediaType) {
+        case 'movie':
+            return "#659157";
+        case 'tv':
+            return "#edae49";
+        case 'person':
+            return "#884e88";
+        default:
+            return "#99AABB";
+    }
+}
 
  
 
@@ -1192,7 +1209,7 @@ if (originalInputValueDescriptor) {
         set: function(val) {
             const oldValue = this.value;
             originalInputValueDescriptor.set.call(this, val);
-            if (oldValue !== val) {
+            if (oldValue !== val && !window.initializingSettings) {
                 this.dispatchEvent(new Event('input', { bubbles: true }));
             }
         }
@@ -1395,22 +1412,20 @@ export function msToTime(ms) {
 export function updateGraph(path) {
     if (!path || !Array.isArray(path)) return;
 
-    let newlyAddedNodes = [];
-
     // 1. Update sizes & counts
-    path.forEach((item, index) => {
-        const nodeId = String(item.id);
+    path.forEach((item) => {
+        const nodeKey = getGraphNodeKey(item);
 
-        if (graph.hasNode(nodeId)) {
-            const currentViewed = graph.getNodeAttribute(nodeId, "viewed") || 1;
+        if (graph.hasNode(nodeKey)) {
+            const currentViewed = graph.getNodeAttribute(nodeKey, "viewed") || 1;
             const newViewed = currentViewed + 1;
-            graph.setNodeAttribute(nodeId, "viewed", newViewed);
-            graph.setNodeAttribute(nodeId, "size", Math.min(40, 8 + newViewed * 3));
+            graph.setNodeAttribute(nodeKey, "viewed", newViewed);
+            graph.setNodeAttribute(nodeKey, "size", Math.min(40, 8 + newViewed * 3));
         } else {
             const initialViewed = 1;
             const initialSize = 8 + initialViewed * 3;
             
-            graph.addNode(nodeId, {
+            graph.addNode(nodeKey, {
                 id: item.id,
                 name: item.name,
                 label: item.name,
@@ -1421,25 +1436,10 @@ export function updateGraph(path) {
                 x: 0,
                 y: 0,
                 size: initialSize,
-                color: determineNodeColor(item.media_type)
+                color: getGraphNodeColor(item.media_type)
             });
-
-            newlyAddedNodes.push({ nodeId, index });
         }
     });
-
-    function determineNodeColor(mediaType) {
-      switch (mediaType) {
-          case 'movie':
-              return "#659157"; 
-          case 'tv':
-              return "#edae49"; 
-          case 'person':
-              return "#884e88"; 
-          default:
-              return "#99AABB";
-      }
-    }
 
     const textContainer = document.getElementById('stats-graph-container-text');
     if (textContainer) {
@@ -1448,11 +1448,11 @@ export function updateGraph(path) {
 
     // 2. Sequential links
     for (let i = 0; i < path.length - 1; i++) {
-        const sourceId = String(path[i].id);
-        const targetId = String(path[i + 1].id);
+        const sourceKey = getGraphNodeKey(path[i]);
+        const targetKey = getGraphNodeKey(path[i + 1]);
 
-        if (!graph.hasEdge(sourceId, targetId) && !graph.hasEdge(targetId, sourceId)) {
-            graph.addEdge(sourceId, targetId, { size: 2, color: "#99AABB" });
+        if (!graph.hasEdge(sourceKey, targetKey) && !graph.hasEdge(targetKey, sourceKey)) {
+            graph.addEdge(sourceKey, targetKey, { size: 2, color: "#99AABB" });
         }
     }
 
@@ -1470,7 +1470,7 @@ export function updateGraph(path) {
 
     // 4. Always re-run the full layout on update
     if (currentCenterNode) {
-        lastCenterNodeId = currentCenterNode;
+        lastCenterNodeKey = currentCenterNode;
         runConcentricLayout(currentCenterNode);
     }
 
@@ -2124,6 +2124,195 @@ export function loadGraph() {
             console.error("Failed to parse stored graph data:", e);
         }
     }
+    console.log("Graph data:", graph.export());
+}
+
+const SAVE_CODE_PREFIX = 'sd1.';
+const PROFILE_PREFERENCE_KEYS = [
+    'masterVolume',
+    'musicVolume',
+    'sfxVolume',
+    'mediaFilter',
+    'no-tv',
+    'no-movies',
+    'no-mcu',
+    'no-big-3',
+    'target-name-only',
+    'bannedItems'
+];
+
+function bytesToBase64Url(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
+
+    return btoa(binary)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+}
+
+function base64UrlToBytes(value) {
+    const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let index = 0; index < binary.length; index++) {
+        bytes[index] = binary.charCodeAt(index);
+    }
+
+    return bytes;
+}
+
+async function compressSavePayload(payload) {
+    if (typeof CompressionStream === 'undefined') {
+        throw new Error('Compressed save codes are not supported by this browser.');
+    }
+
+    const stream = new Blob([JSON.stringify(payload)]).stream().pipeThrough(new CompressionStream('gzip'));
+    const compressed = new Uint8Array(await new Response(stream).arrayBuffer());
+    return `${SAVE_CODE_PREFIX}${bytesToBase64Url(compressed)}`;
+}
+
+async function decompressSaveCode(saveCode) {
+    if (typeof DecompressionStream === 'undefined') {
+        throw new Error('Compressed save codes are not supported by this browser.');
+    }
+    if (!saveCode.startsWith(SAVE_CODE_PREFIX)) {
+        throw new Error('Invalid save code format.');
+    }
+
+    const compressed = base64UrlToBytes(saveCode.slice(SAVE_CODE_PREFIX.length));
+    const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(await new Response(stream).text());
+}
+
+function getExportPreferences() {
+    const preferences = {};
+
+    PROFILE_PREFERENCE_KEYS.forEach((key) => {
+        const value = localStorage.getItem(key);
+        if (value !== null) {
+            preferences[key] = value;
+        }
+    });
+
+    return preferences;
+}
+
+function getExportGraph() {
+    return {
+        nodes: graph.nodes().map((key) => {
+            const attributes = graph.getNodeAttributes(key);
+            return {
+                key,
+                name: attributes.name || attributes.label || '',
+                viewed: attributes.viewed || 1
+            };
+        }),
+        edges: graph.edges().map((edge) => graph.extremities(edge))
+    };
+}
+
+export async function createSaveCode() {
+    const stats = JSON.parse(localStorage.getItem('stats') || '{}');
+    const payload = {
+        format: 'six-degrees-save',
+        version: 1,
+        stats,
+        preferences: getExportPreferences(),
+        graph: getExportGraph()
+    };
+
+    return compressSavePayload(payload);
+}
+
+function validateSavePayload(payload) {
+    if (!payload || payload.format !== 'six-degrees-save' || payload.version !== 1) {
+        throw new Error('This save code is not compatible with this version of Six Degrees.');
+    }
+    if (!payload.stats || typeof payload.stats !== 'object') {
+        throw new Error('The save code is missing statistics data.');
+    }
+    if (!payload.preferences || typeof payload.preferences !== 'object') {
+        throw new Error('The save code is missing settings data.');
+    }
+    if (!payload.graph || !Array.isArray(payload.graph.nodes) || !Array.isArray(payload.graph.edges)) {
+        throw new Error('The save code is missing graph data.');
+    }
+}
+
+function importGraphData(graphData) {
+    const nodeKeys = new Set();
+    const nodes = graphData.nodes.map((node) => {
+        if (typeof node.key !== 'string' || !/^(movie|tv|person):\d+$/.test(node.key)) {
+            throw new Error('The save code contains an invalid graph node.');
+        }
+        if (nodeKeys.has(node.key)) {
+            throw new Error('The save code contains duplicate graph nodes.');
+        }
+        nodeKeys.add(node.key);
+
+        const separatorIndex = node.key.indexOf(':');
+        const mediaType = node.key.slice(0, separatorIndex);
+        const id = Number(node.key.slice(separatorIndex + 1));
+        const name = typeof node.name === 'string' ? node.name : '';
+        const viewed = Number.isFinite(node.viewed) && node.viewed > 0 ? node.viewed : 1;
+
+        return {
+            key: node.key,
+            attributes: {
+                id,
+                name,
+                label: name,
+                media_type: mediaType,
+                imagePath: null,
+                subText: '',
+                viewed,
+                x: 0,
+                y: 0,
+                size: Math.min(40, 8 + viewed * 3),
+                color: getGraphNodeColor(mediaType)
+            }
+        };
+    });
+
+    const edges = graphData.edges.map((edge) => {
+        if (!Array.isArray(edge) || edge.length !== 2 || typeof edge[0] !== 'string' || typeof edge[1] !== 'string' || !nodeKeys.has(edge[0]) || !nodeKeys.has(edge[1])) {
+            throw new Error('The save code contains an invalid graph edge.');
+        }
+        return edge;
+    });
+
+    graph.clear();
+    nodes.forEach((node) => graph.addNode(node.key, node.attributes));
+    edges.forEach((edge) => {
+        if (!graph.hasEdge(edge[0], edge[1]) && !graph.hasEdge(edge[1], edge[0])) {
+            graph.addEdge(edge[0], edge[1], { size: 2, color: '#99AABB' });
+        }
+    });
+
+    if (graph.order > 0) {
+        runConcentricLayout(graph.nodes()[0]);
+    }
+}
+
+export async function importSaveCode(saveCode) {
+    const payload = await decompressSaveCode(saveCode.trim());
+    validateSavePayload(payload);
+    importGraphData(payload.graph);
+
+    localStorage.setItem('stats', JSON.stringify(payload.stats));
+    PROFILE_PREFERENCE_KEYS.forEach((key) => localStorage.removeItem(key));
+    Object.entries(payload.preferences).forEach(([key, value]) => {
+        if (PROFILE_PREFERENCE_KEYS.includes(key) && typeof value === 'string') {
+            localStorage.setItem(key, value);
+        }
+    });
+    saveGraph();
 }
 
 // Immediately load stored graph data when script runs
@@ -2179,6 +2368,8 @@ window.updateGraph = updateGraph;
 window.mountStatsGraph = mountStatsGraph;
 window.saveGraph = saveGraph;
 window.loadGraph = loadGraph;
+window.createSaveCode = createSaveCode;
+window.importSaveCode = importSaveCode;
 
 
 window.TMDB_API_KEY = TMDB_API_KEY;

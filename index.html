@@ -323,6 +323,18 @@
                                     <button id="toggle-no-movies" class="custom-toggle-btn"></button>
                                 </div>
                             </div>
+
+                            <div style="box-sizing: border-box; display: flex; height: 70px; width: 100%; border-bottom: 2px solid #FFFFFF; padding: 10px; justify-content: left; align-items: center; gap: 20px;">
+                                <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 40px;" class="text-blue">SAVE DATA</span>
+                            </div>
+                            <div style="display: flex; flex-direction: row; gap: 12px; margin-top: 20px;">
+                                <div style="position: relative; flex: 1;">
+                                    <button id="export-data-btn" class="primary-blue" style="min-height: 48px; font-family: 'Graphik', sans-serif; font-size: 22px; font-weight: 600; border-radius: 6px;">Export</button>
+                                </div>
+                                <div style="position: relative; flex: 1;">
+                                    <button id="import-data-btn" class="primary-blue" style="min-height: 48px; width: 100%; font-family: 'Graphik', sans-serif; font-size: 22px; font-weight: 600; border-radius: 6px;">Import</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -685,14 +697,65 @@
         </div>
     </div>
 
-    <!-- PLACEHOLDER 3: Mobile Settings Screen -->
+    <!-- Mobile settings screen -->
     <div id="view-settings-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px; padding-bottom: 30px;">
         <div style="display: flex; justify-content: center; align-items: center; padding: 10px 0; border-bottom: 2px solid #2c3844;">
             <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(28px, 8vw, 42px); color: #2f67b1;">SETTINGS</span>
         </div>
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; min-height: 200px; gap: 16px; margin-top: 40px; text-align: center;">
-            <span style="font-family: 'Graphik', sans-serif; font-size: 20px; color: #99AABB;">Settings (Mobile)</span>
-            <span style="font-family: 'Graphik', sans-serif; font-size: 15px; color: #99AABB;">work in progress sorryyyyyyy</span>
+        <div style="display: flex; flex-direction: column; width: 100%; gap: 28px; margin-top: 20px;">
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span class="text-green" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">AUDIO</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px;">
+                    <label style="display: flex; align-items: center; gap: 10px; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">Master Volume<input id="master-volume-mobile" type="range" min="0" max="1" value="0.5" step="0.01" style="flex: 1; accent-color: #659157;"></label>
+                    <label style="display: flex; align-items: center; gap: 10px; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">Sound Effects<input id="sfx-volume-mobile" type="range" min="0" max="1" value="0.5" step="0.01" style="flex: 1; accent-color: #659157;"></label>
+                    <label style="display: flex; align-items: center; gap: 10px; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">Music<input id="music-volume-mobile" type="range" min="0" max="1" value="0.5" step="0.01" style="flex: 1; accent-color: #659157;"></label>
+                </div>
+            </section>
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span class="text-purple" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">HARD MODE</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">
+                    <label style="display: flex; align-items: center; justify-content: space-between;">Target Name Only<input id="target-name-only-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
+                    <label style="display: flex; align-items: center; justify-content: space-between;">No MCU<input id="no-mcu-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
+                    <label style="display: flex; align-items: center; justify-content: space-between;">No 'Big 3' Directors<input id="no-big-3-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
+                    <span style="font-size: 11px; color: #99AABB;">(Steven Spielberg, Christopher Nolan, Quentin Tarantino, and their movies)</span>
+                    <div style="display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div style="flex: 1 1 180px; display: flex; align-items: center; box-sizing: border-box;">
+                            <label style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; box-sizing: border-box; padding: 4px 8px; color: #99AABB;">No TV Shows</label>
+                            <button id="toggle-no-tv-mobile" class="custom-toggle-btn"></button>
+                        </div>
+                        <div style="flex: 1 1 180px; display: flex; align-items: center; box-sizing: border-box;">
+                            <label style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 16px; box-sizing: border-box; padding: 4px 8px; color: #99AABB;">No Movies</label>
+                            <button id="toggle-no-movies-mobile" class="custom-toggle-btn"></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span class="text-blue" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">SAVE DATA</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <div style="position: relative; flex: 1;">
+                        <button id="export-data-btn-mobile" class="primary-blue" style="min-height: 44px; width: 100%; border-radius: 6px; font-family: 'Graphik', sans-serif; font-size: 18px; font-weight: 600;">Export</button>
+                    </div>
+                    <div style="position: relative; flex: 1;">
+                        <button id="import-data-btn-mobile" class="primary-blue" style="min-height: 44px; width: 100%; border-radius: 6px; font-family: 'Graphik', sans-serif; font-size: 18px; font-weight: 600;">Import</button>
+                    </div>
+                </div>
+            </section>
+            <section style="display: flex; flex-direction: column; width: 100%;">
+                <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
+                    <span class="text-orange" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">BANNED ITEMS</span>
+                </div>
+                <input id="banned-item-search-mobile" placeholder="Search for an item to ban..." style="margin-top: 16px; height: 36px; font-size: 16px; font-family: 'Graphik', sans-serif; color: #f8f8f8;" autocomplete="off">
+                <div id="banned-item-container-mobile" style="margin-top: 16px; min-height: 180px; border: 2px solid #99AABB; box-sizing: border-box;">
+                    <div id="banned-item-container-text-mobile" style="font-family: 'Graphik', sans-serif; font-size: 16px; color: #99AABB; justify-content: center; align-items: center; display: flex; min-height: 180px;">Banned items will appear here</div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -826,6 +889,17 @@
                                     <span style="margin-left: 30px;">https://escp-music.bandcamp.com </span>
         </p>
         <br>
+    </div>
+
+    <div id="import-popup" style="display: none; font-family: 'Graphik', sans-serif; width: 50%; min-height: 40%; border: 5px solid #99AABB; border-radius: 12px; background-color: #161c22; z-index: 2001; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px; box-sizing: border-box;">
+        <div style="display: flex; align-items: center;">
+            <span class="text-blue" style="font-weight: 600; font-size: 40px;">IMPORT</span>
+        </div>
+        <textarea id="import-data-input" placeholder="Paste save code here..." style="display: block; width: 100%; height: 220px; margin-top: 20px; resize: vertical; padding: 6px 8px; border: 0px solid #FF8000; border-radius: 4px; background: #99AABB; color: #f8f8f8; font-family: 'Graphik', sans-serif; font-size: 16px; box-sizing: border-box;"></textarea>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button id="import-cancel-btn" class="primary-orange" style="flex: 1; min-height: 48px; font-family: 'Graphik', sans-serif; font-size: 22px; font-weight: 600; border-radius: 6px;">Cancel</button>
+            <button id="import-load-btn" class="primary-blue" style="flex: 1; min-height: 48px; font-family: 'Graphik', sans-serif; font-size: 22px; font-weight: 600; border-radius: 6px;">Load Data</button>
+        </div>
     </div>
 
     <div id="overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; height: 100dvh; background-color: rgba(0, 0, 0, 0.7); z-index: 2000;"></div>
