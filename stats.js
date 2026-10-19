@@ -400,16 +400,18 @@ if (statsClearBtn) {
                 msgEl.className = 'stats-clear-error-msg';
                 msgEl.textContent = 'WARNING: This will clear ALL of your local data\nPress again to confirm';
                 
-                // Append directly to the body to completely escape footer overflow clipping
-                document.body.appendChild(msgEl);
+                const messageContainer = statsClearBtn.parentElement;
+                if (messageContainer && getComputedStyle(messageContainer).position === 'static') {
+                    messageContainer.style.position = 'relative';
+                }
+                if (messageContainer) messageContainer.appendChild(msgEl);
 
-                // Compute exact viewport coordinates to float right above the button
-                const rect = statsClearBtn.getBoundingClientRect();
                 msgEl.style.cssText = `
-                    position: fixed;
-                    left: ${rect.left + (rect.width / 2)}px;
-                    bottom: ${window.innerHeight - rect.top + 12}px;
-                    width: ${statsClearBtn.id === 'stats-clear-btn' && window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000) ? `${rect.width}px` : 'auto'};
+                    position: absolute;
+                    left: 50%;
+                    bottom: calc(100% + 12px);
+                    width: ${window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000) ? '100%' : 'auto'};
+                    max-width: 100%;
                     box-sizing: border-box;
                     transform: translateX(-50%);
                     background-color: #161c22;
@@ -454,6 +456,14 @@ if (statsClearBtn) {
         }
     });
 }
+
+window.resetStatsClearWarning = () => {
+    clearTimeout(clearConfirmTimeout);
+    isConfirmingClear = false;
+    if (statsClearBtn) statsClearBtn.classList.remove('stats-clear-warning');
+    const msgEl = document.getElementById('stats-clear-msg');
+    if (msgEl) msgEl.remove();
+};
 
 
 

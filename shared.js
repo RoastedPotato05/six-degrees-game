@@ -1222,6 +1222,10 @@ function switchView(viewId, params = {}) {
     const baseView = viewId.replace('-mobile', '');
     currentActiveView = baseView;
 
+    if (baseView !== 'view-stats' && typeof window.resetStatsClearWarning === 'function') {
+        window.resetStatsClearWarning();
+    }
+
     const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
     const targetViewId = isMobile ? `${baseView}-mobile` : baseView;
 
