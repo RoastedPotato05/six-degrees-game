@@ -5,9 +5,6 @@ function getStatsElement(id) {
 
 export async function initStats() {
     const isMobile = window.innerWidth <= (window.MOBILE_BREAKPOINT || 1000);
-    // Fetch stats data from the server
-    window.updateGraph([]);
-    // this updates the graph on opening stats remove if that becomes an issue (it will go back to only updating on run complete)
     let stats = JSON.parse(localStorage.getItem('stats')) || {
         wins: 0,
         winStreak: 0,
@@ -42,11 +39,6 @@ export async function initStats() {
         }
     }
 
-    renderStatsGraph();
-
-    // 3. Render graph if data exists
-    renderStatsGraph();
-
     let wins = stats.wins || 0;
     let winStreak = stats.winStreak || 0;
     let shortestPath = stats.shortestPath || 0;
@@ -56,7 +48,6 @@ export async function initStats() {
     let averageTime = stats.averageTime || 0;
     let slowestTime = stats.slowestTime || 0;
     let savedRuns = stats.savedRuns || [];
-    renderStatsGraph();
 
     // Update the stats display
     getStatsElement('wins').textContent = wins;
@@ -67,6 +58,8 @@ export async function initStats() {
     getStatsElement('fastest-time').textContent = window.msToTime(fastestTime);
     getStatsElement('average-time').textContent = window.msToTime(averageTime);
     getStatsElement('slowest-time').textContent = window.msToTime(slowestTime);
+
+    renderStatsGraph();
 
 
 
@@ -479,6 +472,10 @@ export function renderStatsGraph() {
         return;
     }
 
-    // Displays the pre-calculated graph instantly
-    window.mountStatsGraph(container);
+    // Wait for the view to be laid out before creating WebGL canvases.
+    requestAnimationFrame(() => {
+        if (container.isConnected) {
+            window.mountStatsGraph(container);
+        }
+    });
 }

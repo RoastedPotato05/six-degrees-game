@@ -1,6 +1,6 @@
 // shared.js
-import Graph from "https://esm.sh/graphology";
-import Sigma from "https://esm.sh/sigma";
+import Graph from "https://esm.sh/graphology@0.26.0";
+import Sigma from "https://esm.sh/sigma@3.0.3";
 
 
 const TMDB_API_KEY = '1bb166cc311693519c574fe0560e8d05';
@@ -1475,6 +1475,15 @@ export function updateGraph(path) {
     }
 
     saveGraph();
+
+    if (currentActiveView === 'view-stats') {
+        const statsContainer = document.querySelector(
+            window.innerWidth <= MOBILE_BREAKPOINT ? '#stats-graph-mobile' : '#stats-graph'
+        );
+        if (statsContainer) {
+            requestAnimationFrame(() => mountStatsGraph(statsContainer));
+        }
+    }
 }
 
 // Mounts the Graphology instance to the container without re-calculating layouts
@@ -1483,23 +1492,32 @@ export function mountStatsGraph(container) {
 
     // Target the specific inner canvas wrapper we created in initStats
     const canvasTarget = container.querySelector('#sigma-canvas-wrapper') || container;
+    if (canvasTarget.clientWidth === 0 || canvasTarget.clientHeight === 0) return;
+
+    const emptyState = canvasTarget.querySelector('#stats-graph-container-text');
+    if (emptyState) {
+        emptyState.parentElement.remove();
+    }
 
     if (sigmaInstance) {
         if (sigmaInstance.getContainer() === canvasTarget) {
-            if (canvasTarget.clientWidth > 0 && canvasTarget.clientHeight > 0) {
-                sigmaInstance.refresh();
+            if (canvasTarget.querySelector("canvas")) {
+                return;
             }
-            return;
+
+            sigmaInstance.kill();
+            sigmaInstance = null;
         }
 
-        sigmaInstance.kill();
-        sigmaInstance = null;
+        if (sigmaInstance) {
+            sigmaInstance.kill();
+            sigmaInstance = null;
+        }
     }
 
     sigmaInstance = new Sigma(graph, canvasTarget, {
         renderEdgeLabels: false,
         renderNodeLabels: true,
-        allowInvalidContainer: true,
         defaultNodeColor: "#edae49",
         defaultEdgeColor: "#99AABB",
         labelFont: "Graphik, sans-serif",
