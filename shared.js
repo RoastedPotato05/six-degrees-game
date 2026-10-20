@@ -1336,8 +1336,12 @@ function switchView(viewId, params = {}) {
 
     const saveText = document.getElementById('save-text');
     if (saveText) saveText.innerText = 'Save';
+    const mobileSaveText = document.getElementById('mobile-victory-save-btn');
+    if (mobileSaveText) mobileSaveText.innerText = 'Save';
     const shareText = document.getElementById('share-text');
     if (shareText) shareText.innerText = 'Share';
+    const mobileShareText = document.getElementById('mobile-victory-share-btn');
+    if (mobileShareText) mobileShareText.innerText = 'Share';
 
     reset();
 
@@ -1521,13 +1525,13 @@ export function updateGraph(path) {
         const nodeKey = getGraphNodeKey(item);
 
         if (graph.hasNode(nodeKey)) {
-            const currentViewed = graph.getNodeAttribute(nodeKey, "viewed") || 1;
+            const currentViewed = Number(graph.getNodeAttribute(nodeKey, "viewed")) || 1;
             const newViewed = currentViewed + 1;
             graph.setNodeAttribute(nodeKey, "viewed", newViewed);
-            graph.setNodeAttribute(nodeKey, "size", Math.min(40, 8 + newViewed * 3));
+            graph.setNodeAttribute(nodeKey, "size", Math.min(26, 6 + newViewed * 2));
         } else {
             const initialViewed = 1;
-            const initialSize = 8 + initialViewed * 3;
+            const initialSize = 6 + initialViewed * 2;
             
             graph.addNode(nodeKey, {
                 id: item.id,
@@ -1591,12 +1595,17 @@ export function updateGraph(path) {
 }
 
 // Mounts the Graphology instance to the container without re-calculating layouts
-export function mountStatsGraph(container) {
+export function mountStatsGraph(container, attempt = 0) {
     if (!container || graph.order === 0) return;
 
     // Target the specific inner canvas wrapper we created in initStats
     const canvasTarget = container.querySelector('#sigma-canvas-wrapper') || container;
-    if (canvasTarget.clientWidth === 0 || canvasTarget.clientHeight === 0) return;
+    if (canvasTarget.clientWidth === 0 || canvasTarget.clientHeight === 0) {
+        if (attempt < 10) {
+            requestAnimationFrame(() => mountStatsGraph(container, attempt + 1));
+        }
+        return;
+    }
 
     const emptyState = canvasTarget.querySelector('#stats-graph-container-text');
     if (emptyState) {
@@ -1606,6 +1615,7 @@ export function mountStatsGraph(container) {
     if (sigmaInstance) {
         if (sigmaInstance.getContainer() === canvasTarget) {
             if (canvasTarget.querySelector("canvas")) {
+                sigmaInstance.refresh();
                 return;
             }
 
@@ -2058,152 +2068,177 @@ function updateHoveredNeighbors() {
 function runConcentricLayout(centerNode) {
     if (!centerNode || !graph.hasNode(centerNode)) return;
 
-    const LAYER_RADIUS = 150; // Increased slightly so outer ring labels have room
+    const LAYER_RADIUS = 150;
+    const MIN_NODE_DISTANCE = 64;
+    const normalizeAngle = (angle) => (angle + Math.PI * 2) % (Math.PI * 2);
+    const angleDifference = (from, to) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 
-    // 1. BFS to determine exact hop depth (layer)
-    const depthMap = new Map();
-    const layers = new Map();
-    const queue = [{ node: centerNode, depth: 0 }];
+    graph.forEachNode((node) => {
+        const viewed = Math.max(1, Number(graph.getNodeAttribute(node, "viewed")) || 1);
+        graph.setNodeAttribute(node, "size", Math.min(26, 6 + viewed * 2));
+    });
 
-    depthMap.set(centerNode, 0);
-    layers.set(0, [centerNode]);
+    // Find every connected component instead of placing unrelated nodes on the main graph's first ring.
+    const components = [];
+    const unvisited = new Set(graph.nodes());
+    while (unvisited.size > 0) {
+        const component = [];
+        const queue = [unvisited.values().next().value];
+        unvisited.delete(queue[0]);
 
-    while (queue.length > 0) {
-        const { node, depth } = queue.shift();
-        graph.forEachNeighbor(node, (neighbor) => {
-            if (!depthMap.has(neighbor)) {
-                const nextDepth = depth + 1;
-                depthMap.set(neighbor, nextDepth);
-                if (!layers.has(nextDepth)) layers.set(nextDepth, []);
-                layers.get(nextDepth).push(neighbor);
-                queue.push({ node: neighbor, depth: nextDepth });
-            }
-        });
+        while (queue.length > 0) {
+            const node = queue.shift();
+            component.push(node);
+            graph.forEachNeighbor(node, (neighbor) => {
+                if (unvisited.has(neighbor)) {
+                    unvisited.delete(neighbor);
+                    queue.push(neighbor);
+                }
+            });
+        }
+        components.push(component);
     }
 
-    // Catch disconnected nodes (assign to Ring 1)
-    graph.forEachNode((node) => {
-        if (!depthMap.has(node)) {
-            depthMap.set(node, 1);
-            if (!layers.has(1)) layers.set(1, []);
-            layers.get(1).push(node);
-        }
-    });
+    const getViewed = (node) => graph.getNodeAttribute(node, "viewed") || 1;
+    const componentCenter = (component) => component.reduce((best, node) => (
+        getViewed(node) > getViewed(best) ? node : best
+    ), component[0]);
 
-    // 2. Initial angular setup with WEDGE FAN-OUT
-    const angles = new Map();
-    angles.set(centerNode, 0);
+    // Keep the component containing the most-visited node at the origin.
+    components.sort((a, b) => getViewed(componentCenter(b)) - getViewed(componentCenter(a)));
+    const mainComponent = components[0];
+    const mainCenter = componentCenter(mainComponent);
 
-    const sortedDepths = Array.from(layers.keys()).sort((a, b) => a - b);
+    const layouts = components.map((component) => {
+        const localCenter = componentCenter(component);
+        const componentSet = new Set(component);
+        const depthMap = new Map([[localCenter, 0]]);
+        const parentMap = new Map();
+        const layers = new Map([[0, [localCenter]]]);
+        const queue = [localCenter];
 
-    sortedDepths.forEach((depth) => {
-        if (depth === 0) return;
-        const nodes = layers.get(depth);
-        const count = nodes.length;
-
-        if (depth === 1) {
-            // Space Layer 1 evenly across all 360 degrees
-            nodes.forEach((node, index) => {
-                angles.set(node, (index / count) * 2 * Math.PI);
-            });
-        } else {
-            // Group nodes by their primary parent target angle
-            const nodeTargets = nodes.map((node) => {
-                let sumX = 0;
-                let sumY = 0;
-                let parentCount = 0;
-
-                graph.forEachNeighbor(node, (neighbor) => {
-                    if (depthMap.get(neighbor) < depth && angles.has(neighbor)) {
-                        const a = angles.get(neighbor);
-                        sumX += Math.cos(a);
-                        sumY += Math.sin(a);
-                        parentCount++;
-                    }
-                });
-
-                let targetAngle = parentCount > 0 ? Math.atan2(sumY, sumX) : Math.random() * 2 * Math.PI;
-                if (targetAngle < 0) targetAngle += 2 * Math.PI;
-
-                return { node, targetAngle };
-            });
-
-            // Sort nodes by parent target angle to maintain non-crossing layout order
-            nodeTargets.sort((a, b) => a.targetAngle - b.targetAngle);
-
-            // Spread out sorted nodes evenly around the ring so no two start on identical angles
-            nodeTargets.forEach((item, index) => {
-                const evenAngle = (index / count) * 2 * Math.PI;
-                // Blend 80% parent direction + 20% even ring distribution
-                let initialAngle = item.targetAngle * 0.8 + evenAngle * 0.2;
-                angles.set(item.node, initialAngle);
+        while (queue.length > 0) {
+            const node = queue.shift();
+            const depth = depthMap.get(node);
+            graph.forEachNeighbor(node, (neighbor) => {
+                if (!componentSet.has(neighbor) || depthMap.has(neighbor)) return;
+                depthMap.set(neighbor, depth + 1);
+                parentMap.set(neighbor, node);
+                if (!layers.has(depth + 1)) layers.set(depth + 1, []);
+                layers.get(depth + 1).push(neighbor);
+                queue.push(neighbor);
             });
         }
-    });
 
-    // 3. Angular Force Relaxation (Enforce minimum arc spacing on each ring)
-    const iterations = 60;
-    const ATTRACTION_WEIGHT = 0.08; // Gentle pull toward parent spoke
-    const REPULSION_WEIGHT = 0.1;  // Strong push to prevent node overlap on the same ring
+        const angles = new Map([[localCenter, 0]]);
+        const sortedDepths = Array.from(layers.keys()).sort((a, b) => a - b);
+        const layerRadii = new Map([[0, 0]]);
+        sortedDepths.slice(1).forEach((depth) => {
+            const nodeCount = layers.get(depth).length;
+            const minimumRadius = nodeCount * MIN_NODE_DISTANCE / (Math.PI * 2);
+            const previousRadius = layerRadii.get(depth - 1);
+            layerRadii.set(depth, Math.max(previousRadius + LAYER_RADIUS, minimumRadius));
+        });
 
-    for (let iter = 0; iter < iterations; iter++) {
         sortedDepths.forEach((depth) => {
             if (depth === 0) return;
             const nodes = layers.get(depth);
-            const count = nodes.length;
-
-            // Minimum required arc distance between adjacent nodes on this ring
-            const minSpacing = (2 * Math.PI) / count;
+            const groups = new Map();
 
             nodes.forEach((node) => {
-                let force = 0;
-                const currentAngle = angles.get(node);
+                const parent = parentMap.get(node);
+                if (!groups.has(parent)) groups.set(parent, []);
+                groups.get(parent).push(node);
+            });
 
-                // Inter-layer attraction: pull toward connected neighbors
-                graph.forEachNeighbor(node, (neighbor) => {
-                    if (angles.has(neighbor) && neighbor !== centerNode) {
-                        let diff = angles.get(neighbor) - currentAngle;
-                        diff = Math.atan2(Math.sin(diff), Math.cos(diff)); // Shortest arc [-PI, PI]
-                        force += diff * ATTRACTION_WEIGHT;
-                    }
+            const groupEntries = Array.from(groups.entries()).sort((a, b) => angles.get(a[0]) - angles.get(b[0]));
+            groupEntries.forEach(([parent, children]) => {
+                children.sort();
+                const parentAngle = angles.get(parent) || 0;
+                const spread = (children.length - 1) *
+                    MIN_NODE_DISTANCE / layerRadii.get(depth);
+
+                children.forEach((node, index) => {
+                    const offset = children.length === 1
+                        ? 0
+                        : ((index / (children.length - 1)) - 0.5) * spread;
+                    angles.set(node, normalizeAngle(parentAngle + offset));
                 });
-
-                // Intra-layer repulsion: strongly push nodes apart if closer than minSpacing
-                nodes.forEach((other) => {
-                    if (other !== node) {
-                        let diff = angles.get(other) - currentAngle;
-                        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-
-                        if (Math.abs(diff) < minSpacing && Math.abs(diff) > 0.0001) {
-                            const pushDirection = diff < 0 ? 1 : -1;
-                            const overlapAmount = minSpacing - Math.abs(diff);
-                            force += overlapAmount * pushDirection * REPULSION_WEIGHT;
-                        }
-                    }
-                });
-
-                let newAngle = (currentAngle + force + 2 * Math.PI) % (2 * Math.PI);
-                angles.set(node, newAngle);
             });
         });
-    }
 
-    // 4. Strict Snap to Radial Circles (r = depth * LAYER_RADIUS)
-    graph.setNodeAttribute(centerNode, "x", 0);
-    graph.setNodeAttribute(centerNode, "y", 0);
+        const nodesByDepth = new Map(sortedDepths.map((depth) => [depth, layers.get(depth)]));
+        const nodeOrder = new Map(component.map((node, index) => [node, index]));
+        for (let iteration = 0; iteration < 50; iteration++) {
+            component.forEach((node) => {
+                const depth = depthMap.get(node);
+                if (depth === 0) return;
 
-    sortedDepths.forEach((depth) => {
-        if (depth === 0) return;
-        
-        const exactRadius = depth * LAYER_RADIUS;
-        const nodes = layers.get(depth);
+                const target = angles.get(parentMap.get(node)) || 0;
+                let force = angleDifference(angles.get(node), target) * 0.04;
 
-        nodes.forEach((node) => {
-            const theta = angles.get(node);
-            graph.setNodeAttribute(node, "x", exactRadius * Math.cos(theta));
-            graph.setNodeAttribute(node, "y", exactRadius * Math.sin(theta));
+                graph.neighbors(node).forEach((neighbor) => {
+                    const neighborAngle = angles.get(neighbor);
+                    if (neighborAngle !== undefined) {
+                        force += angleDifference(angles.get(node), neighborAngle) * 0.2;
+                    }
+                });
+
+                const radius = layerRadii.get(depth);
+                nodesByDepth.get(depth).forEach((other) => {
+                    if (node === other) return;
+                    const difference = angleDifference(angles.get(node), angles.get(other));
+                    const nodeSize = graph.getNodeAttribute(node, "size") || 0;
+                    const otherSize = graph.getNodeAttribute(other, "size") || 0;
+                    const minimumAngle = Math.max(
+                        MIN_NODE_DISTANCE,
+                        nodeSize + otherSize + 8
+                    ) / radius;
+                    if (Math.abs(difference) < minimumAngle) {
+                        const direction = difference === 0
+                            ? (nodeOrder.get(node) < nodeOrder.get(other) ? -1 : 1)
+                            : Math.sign(difference);
+                        force -= direction *
+                            (minimumAngle - Math.abs(difference)) * 0.5;
+                    }
+                });
+
+                angles.set(node, normalizeAngle(angles.get(node) + force));
+            });
+        }
+
+        const maxDepth = Math.max(...sortedDepths);
+        const radius = layerRadii.get(maxDepth);
+        return { component, localCenter, layers, angles, layerRadii, maxDepth, radius };
+    });
+
+    const mainLayout = layouts.find((layout) => layout.component === mainComponent);
+    const componentOffsets = new Map([[mainLayout, { x: 0, y: 0 }]]);
+    const secondaryLayouts = layouts.filter((layout) => layout !== mainLayout);
+    const placementRadius = mainLayout.radius + Math.max(...secondaryLayouts.map((layout) => layout.radius), 0) + LAYER_RADIUS;
+
+    secondaryLayouts.forEach((layout, index) => {
+        const angle = (index / Math.max(secondaryLayouts.length, 1)) * Math.PI * 2;
+        componentOffsets.set(layout, {
+            x: Math.cos(angle) * (placementRadius + layout.radius),
+            y: Math.sin(angle) * (placementRadius + layout.radius)
         });
     });
+
+    layouts.forEach((layout) => {
+        const offset = componentOffsets.get(layout);
+        layout.layers.forEach((nodes, depth) => {
+            nodes.forEach((node) => {
+                const radius = layout.layerRadii.get(depth);
+                const angle = layout.angles.get(node) || 0;
+                graph.setNodeAttribute(node, "x", offset.x + radius * Math.cos(angle));
+                graph.setNodeAttribute(node, "y", offset.y + radius * Math.sin(angle));
+            });
+        });
+    });
+
+    graph.setNodeAttribute(mainCenter, "x", 0);
+    graph.setNodeAttribute(mainCenter, "y", 0);
 }
 
 
@@ -2378,7 +2413,7 @@ function importGraphData(graphData) {
                 viewed,
                 x: 0,
                 y: 0,
-                size: Math.min(40, 8 + viewed * 3),
+                size: Math.min(26, 6 + viewed * 2),
                 color: getGraphNodeColor(mediaType)
             }
         };
