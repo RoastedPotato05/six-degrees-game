@@ -828,40 +828,133 @@ function getGraphNodeColor(mediaType) {
 
  
 
+const AUDIO_DEFAULTS = {
+    masterVolume: 0.5,
+    musicVolume: 0.5,
+    sfxVolume: 0.5
+};
+
+function readAudioVolume(key) {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue !== null) return parseFloat(storedValue);
+
+    const legacyKey = key.replace('Volume', '-volume');
+    const legacyValue = localStorage.getItem(legacyKey);
+    if (legacyValue !== null) {
+        localStorage.setItem(key, legacyValue);
+        return parseFloat(legacyValue);
+    }
+
+    return AUDIO_DEFAULTS[key];
+}
+
+function clampAudioVolume(value) {
+    return Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
+}
+
 let bgMusic = window.bgMusic;
+let audioContext = null;
+let musicGain = null;
+let sfxGain = null;
+let webAudioEnabled = false;
+let webAudioInitialized = false;
+
+function isIOSAudioPlatform() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function initializeWebAudio() {
+    if (webAudioInitialized) return webAudioEnabled;
+    webAudioInitialized = true;
+
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor || !bgMusic) return false;
+
+    try {
+        audioContext = new AudioContextConstructor();
+        const musicSource = audioContext.createMediaElementSource(bgMusic);
+        musicGain = audioContext.createGain();
+        sfxGain = audioContext.createGain();
+        musicSource.connect(musicGain).connect(audioContext.destination);
+        sfxGain.connect(audioContext.destination);
+        webAudioEnabled = true;
+        applyAudioVolumeSettings();
+        return true;
+    } catch (error) {
+        console.warn('Web Audio fallback could not be initialized:', error);
+        return false;
+    }
+}
+
+function resumeWebAudio() {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().catch((error) => {
+            console.warn('Web Audio could not resume:', error);
+        });
+    }
+}
+
+function applyAudioVolumeSettings(masterValue, musicValue, sfxValue) {
+    const masterVol = clampAudioVolume(masterValue === undefined ? readAudioVolume('masterVolume') : masterValue);
+    const musicVol = clampAudioVolume(musicValue === undefined ? readAudioVolume('musicVolume') : musicValue);
+    const sfxVol = clampAudioVolume(sfxValue === undefined ? readAudioVolume('sfxVolume') : sfxValue);
+    const musicVolume = masterVol * musicVol;
+    const sfxVolume = masterVol * sfxVol;
+
+    if (webAudioEnabled) {
+        musicGain.gain.value = musicVolume;
+        sfxGain.gain.value = sfxVolume;
+        if (bgMusic) bgMusic.volume = 1;
+        resumeWebAudio();
+        return;
+    }
+
+    if (bgMusic) {
+        bgMusic.volume = musicVolume;
+        if (bgMusic.volume !== musicVolume && initializeWebAudio()) {
+            applyAudioVolumeSettings(masterVol, musicVol, sfxVol);
+        }
+    }
+}
+
+function enableAudioFallback() {
+    if (initializeWebAudio()) {
+        applyAudioVolumeSettings();
+        resumeWebAudio();
+    }
+}
+
 if (!bgMusic) {
     const audioUrl = new URL('sounds/background.mp3', window.location.href).href;
     bgMusic = new Audio(audioUrl);
     bgMusic.loop = true;
-    
-    // Fall back to 0 (or your preferred default) instead of 0.5/1.0 if not set
-    const musicVol = localStorage.getItem('musicVolume');
-    const masterVol = localStorage.getItem('masterVolume');
-    const mVal = musicVol !== null ? parseFloat(musicVol) : 0.5; 
-    const maVal = masterVol !== null ? parseFloat(masterVol) : 0; // Changed default fallback to 0
-    bgMusic.volume = Math.min(1, Math.max(0, mVal * maVal));
-    console.log("Audio initialized. Volume:", bgMusic.volume);
 
-    bgMusic.onerror = (e) => {
-        console.error("Audio error: Could not load 'sounds/background.mp3'.", e);
+    if (isIOSAudioPlatform()) enableAudioFallback();
+    applyAudioVolumeSettings();
+
+    bgMusic.onerror = (error) => {
+        console.error("Audio error: Could not load 'sounds/background.mp3'.", error);
+        enableAudioFallback();
     };
 
-    
-
-    // Always attempt to play; if blocked, wait for any click/key to unlock it on this page
     bgMusic.play().then(() => {
         console.log("Audio playing successfully.");
     }).catch(() => {
         console.log("Autoplay blocked by browser. Click anywhere on the page to start music.");
         const startOnInteraction = () => {
+            if (isIOSAudioPlatform()) enableAudioFallback();
+            resumeWebAudio();
             bgMusic.play().then(() => {
                 console.log("Audio started via user interaction.");
-            }).catch(err => console.log("Interaction play failed:", err));
+            }).catch(error => console.log("Interaction play failed:", error));
             window.removeEventListener('click', startOnInteraction);
             window.removeEventListener('keydown', startOnInteraction);
+            window.removeEventListener('touchstart', startOnInteraction);
         };
         window.addEventListener('click', startOnInteraction);
         window.addEventListener('keydown', startOnInteraction);
+        window.addEventListener('touchstart', startOnInteraction);
     });
 
     window.bgMusic = bgMusic;
@@ -869,19 +962,26 @@ if (!bgMusic) {
 
 function playSoundEffect(filename) {
     const sfx = new Audio(`sounds/${filename}`);
-    
-    // Pull saved volumes from localStorage
-    const masterVol = localStorage.getItem('masterVolume');
-    const sfxVol = localStorage.getItem('sfxVolume');
-    
-    const maVal = masterVol !== null ? parseFloat(masterVol) : 0;
-    const sVal = sfxVol !== null ? parseFloat(sfxVol) : 0.5;
-    
-    // Apply combined volume scaling
-    sfx.volume = Math.min(1, Math.max(0, sVal * maVal));
-    
-    sfx.play().catch(err => {
-        console.log("SFX play blocked or failed:", err);
+    const masterVol = readAudioVolume('masterVolume');
+    const sfxVol = readAudioVolume('sfxVolume');
+    const volume = clampAudioVolume(masterVol) * clampAudioVolume(sfxVol);
+
+    if (webAudioEnabled) {
+        try {
+            const source = audioContext.createMediaElementSource(sfx);
+            source.connect(sfxGain);
+            sfx.volume = 1;
+            resumeWebAudio();
+        } catch (error) {
+            console.warn('Web Audio SFX fallback failed; using native audio:', error);
+            sfx.volume = volume;
+        }
+    } else {
+        sfx.volume = volume;
+    }
+
+    sfx.play().catch(error => {
+        console.log("SFX play blocked or failed:", error);
     });
 };
 
@@ -2367,6 +2467,7 @@ window.updateDisplay = updateDisplay;
 window.switchView = switchView;
 window.showInputError = showInputError;
 window.playSoundEffect = playSoundEffect;
+window.applyAudioVolumeSettings = applyAudioVolumeSettings;
 window.msToTime = msToTime;
 window.updateGraph = updateGraph;
 window.mountStatsGraph = mountStatsGraph;

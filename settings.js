@@ -3,15 +3,35 @@
 let listenersAttached = false;
 const getSettingElements = (id) => Array.from(document.querySelectorAll(`#${id}, #${id}-mobile`));
 const getFirstVisibleSettingElement = (id) => getSettingElements(id).find((element) => element.offsetParent !== null) || getSettingElements(id)[0];
+const volumeSettings = [
+    ['master-volume', 'masterVolume', 0.5],
+    ['sfx-volume', 'sfxVolume', 0.5],
+    ['music-volume', 'musicVolume', 0.5]
+];
+
+function getStoredVolume(key, legacyKey, fallback) {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue !== null) return parseFloat(storedValue);
+
+    const legacyValue = localStorage.getItem(legacyKey);
+    if (legacyValue !== null) {
+        localStorage.setItem(key, legacyValue);
+        return parseFloat(legacyValue);
+    }
+
+    return fallback;
+}
 
 export function initSettings() {
     window.initializingSettings = true;
     // Set slider values from localStorage or defaults
-    [['master-volume', 0], ['sfx-volume', 0.50], ['music-volume', 0.50]].forEach((setting) => {
+    volumeSettings.forEach((setting) => {
         const id = setting[0];
-        const fallback = setting[1];
+        const key = setting[1];
+        const fallback = setting[2];
+        const value = getStoredVolume(key, id, fallback);
         getSettingElements(id).forEach((element) => {
-            element.value = localStorage.getItem(id) !== null ? localStorage.getItem(id) : fallback;
+            element.value = value;
         });
     });
 
@@ -78,7 +98,7 @@ const updateVolumeSettings = () => {
     const sfxVolume = getFirstVisibleSettingElement('sfx-volume');
     const musicVolume = getFirstVisibleSettingElement('music-volume');
 
-    const masterVal = masterVolume ? parseFloat(masterVolume.value) : 0;
+    const masterVal = masterVolume ? parseFloat(masterVolume.value) : 0.5;
     const musicVal = musicVolume ? parseFloat(musicVolume.value) : 0.50;
     const sfxVal = sfxVolume ? parseFloat(sfxVolume.value) : 0.50;
 
@@ -93,8 +113,8 @@ const updateVolumeSettings = () => {
     });
 
     // Dynamically scale and apply to background music
-    if (window.bgMusic) {
-        window.bgMusic.volume = Math.min(1, Math.max(0, musicVal * masterVal));
+    if (typeof window.applyAudioVolumeSettings === 'function') {
+        window.applyAudioVolumeSettings(masterVal, musicVal, sfxVal);
     }
     window.updatingVolumeSettings = false;
 };

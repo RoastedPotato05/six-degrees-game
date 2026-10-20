@@ -35,6 +35,36 @@ const pathPreviewMobile = document.getElementById('path-preview-mobile');
 const pathPreviewFade = document.getElementById('path-preview-fade');
 const pathExtendedInfo = document.getElementById('path-extended-info');
 const pathDropdownArrow = document.getElementById('path-dropdown-arrow');
+const mobileVictoryPopup = document.getElementById('mobile-victory-popup');
+const mobileVictoryCloseBtn = document.getElementById('mobile-victory-close-btn');
+const mobileVictoryReturnBtn = document.getElementById('mobile-victory-return-btn');
+const mobileVictorySaveBtn = document.getElementById('mobile-victory-save-btn');
+const mobileVictoryRandomizeBtn = document.getElementById('mobile-victory-randomize-btn');
+const mobileVictoryShareBtn = document.getElementById('mobile-victory-share-btn');
+const mobileOverlay = document.getElementById('overlay');
+const mobileVictoryMinutes = document.getElementById('mobile-victory-minutes');
+const mobileVictorySeconds = document.getElementById('mobile-victory-seconds');
+const mobileVictoryMilliseconds = document.getElementById('mobile-victory-milliseconds');
+
+function closeMobileVictoryPopup() {
+    if (mobileVictoryPopup) mobileVictoryPopup.style.display = 'none';
+    if (mobileOverlay) mobileOverlay.style.display = 'none';
+}
+
+function showMobileVictoryPopup() {
+    if (!mobileVictoryPopup || !mobileOverlay || window.innerWidth > (window.MOBILE_BREAKPOINT || 1000)) return;
+    const minutesElement = document.getElementById('minutes');
+    const secondsElement = document.getElementById('seconds');
+    const millisecondsElement = document.getElementById('milliseconds');
+    const minutes = minutesElement ? minutesElement.textContent : '00';
+    const seconds = secondsElement ? secondsElement.textContent : '00';
+    const milliseconds = millisecondsElement ? millisecondsElement.textContent : '000';
+    if (mobileVictoryMinutes) mobileVictoryMinutes.textContent = minutes;
+    if (mobileVictorySeconds) mobileVictorySeconds.textContent = seconds;
+    if (mobileVictoryMilliseconds) mobileVictoryMilliseconds.textContent = milliseconds;
+    mobileVictoryPopup.style.display = 'block';
+    mobileOverlay.style.display = 'block';
+}
 
 // Hook mobile search input to filter items
 if (itemSearchMobile) {
@@ -80,9 +110,25 @@ window.addEventListener('resize', updateMobileSearchLayout);
 // Hook mobile return button to navigate home
 if (mobileReturnBtn) {
     mobileReturnBtn.addEventListener('click', () => {
+        if (isRunCompleted) {
+            showMobileVictoryPopup();
+            return;
+        }
         const stats = JSON.parse(localStorage.getItem('stats')) || {};
         stats.winStreak = 0;
         localStorage.setItem('stats', JSON.stringify(stats));
+        closeMobileVictoryPopup();
+        window.switchView('view-home');
+    });
+}
+
+if (mobileVictoryCloseBtn) {
+    mobileVictoryCloseBtn.addEventListener('click', closeMobileVictoryPopup);
+}
+
+if (mobileVictoryReturnBtn) {
+    mobileVictoryReturnBtn.addEventListener('click', () => {
+        closeMobileVictoryPopup();
         window.switchView('view-home');
     });
 }
@@ -211,6 +257,7 @@ export async function initDetour(startDataParam, goalDataParam, detoursDataParam
     if (pathPreviewMobile) pathPreviewMobile.style.display = 'flex';
     if (pathPreviewFade) pathPreviewFade.style.display = 'block';
     if (pathDropdownArrow) pathDropdownArrow.style.transform = 'translateY(-50%) scale(1, 1)';
+    closeMobileVictoryPopup();
     if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
@@ -306,6 +353,7 @@ export async function initStandard(startDataParam, goalDataParam) {
     if (pathPreviewMobile) pathPreviewMobile.style.display = 'flex';
     if (pathPreviewFade) pathPreviewFade.style.display = 'block';
     if (pathDropdownArrow) pathDropdownArrow.style.transform = 'translateY(-50%) scale(1, 1)';
+    closeMobileVictoryPopup();
     if (timerReturnBtn) timerReturnBtn.style.display = 'flex';
     if (victoryDiv) victoryDiv.style.display = 'none';
     if (targetDiv) targetDiv.style.display = 'flex';
@@ -1237,12 +1285,12 @@ victoryRandomizeBtn.addEventListener('click', () => {
     window.startRandomRun();
 });
 
-victorySaveBtn.addEventListener('click', () => {
+function saveCompletedRun() {
     const stats = JSON.parse(localStorage.getItem('stats')) || {};
     stats.savedRuns = stats.savedRuns || [];
     stats.savedRuns.push({
-        start: currentStartData,
-        goal: currentGoalData,
+        start: startData,
+        goal: goalData,
         path: path,
         time: window.difference,
         gamemode: window.currentMode || 'STANDARD'
@@ -1250,7 +1298,23 @@ victorySaveBtn.addEventListener('click', () => {
     localStorage.setItem('stats', JSON.stringify(stats));
     console.log('Run saved to stats.savedRuns');
     document.getElementById('save-text').innerText = 'Saved!';
-});
+}
+
+victorySaveBtn.addEventListener('click', saveCompletedRun);
+
+if (mobileVictorySaveBtn) {
+    mobileVictorySaveBtn.addEventListener('click', () => {
+        saveCompletedRun();
+        mobileVictorySaveBtn.innerText = 'Saved!';
+    });
+}
+
+if (mobileVictoryRandomizeBtn) {
+    mobileVictoryRandomizeBtn.addEventListener('click', () => {
+        closeMobileVictoryPopup();
+        window.startRandomRun();
+    });
+}
 
 function runComplete() {
 
@@ -1318,6 +1382,7 @@ function runComplete() {
     targetDiv.style.display = 'none';
     timerReturnBtn.style.display = 'none';
     victoryDiv.style.display = 'flex';
+    showMobileVictoryPopup();
 
 
     
@@ -1364,12 +1429,21 @@ mobileUndoBtn.addEventListener('click', async () => {
 });
 
 victoryShareBtn.addEventListener('click', () => {
-    // copy the current path to clipboard in a readable format
+    shareCompletedRun();
+});
+
+function shareCompletedRun() {
     const pathString = path.map(item => `${item.name}`).join(' → ');
     navigator.clipboard.writeText(pathString);
-    // Update the share button text to indicate that the path has been copied
     const shareText = document.getElementById('share-text');
     if (shareText) {
-        shareText.innerText = 'Copied to clipboard!';
+        shareText.innerText = 'Copied!';
     }
-});
+}
+
+if (mobileVictoryShareBtn) {
+    mobileVictoryShareBtn.addEventListener('click', () => {
+        shareCompletedRun();
+        mobileVictoryShareBtn.innerText = 'Copied!';
+    });
+}
