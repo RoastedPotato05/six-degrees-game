@@ -230,7 +230,7 @@ export async function initStats() {
                         <rect x="4" y="9" width="12" height="12" rx="1"></rect>
                     </svg>
                 </button>
-                <button class="delete-run-btn primary-orange" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; background: #edae49; border-radius: 3px; border: none; cursor: pointer; font-size: 18px; color: #fff; padding: 4px; width: 36px; height: 36px;"><img src="images/trash.png" style="width: 30px; height: 30px;"></button>
+                <button class="delete-run-btn primary-red" data-index="${runIndex}" style=" display: flex; align-items: center; justify-content: center; border-radius: 3px; border: none; cursor: pointer; font-size: 18px; color: #fff; padding: 4px; width: 36px; height: 36px;"><img src="images/trash.png" style="width: 30px; height: 30px;"></button>
                 <span class="dropdown-arrow" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 16px; color: #99AABB; display: inline-block; transform: scale(1, 1); user-select: none;">⌵</span>
             </div>
         `;

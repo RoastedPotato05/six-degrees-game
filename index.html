@@ -15,11 +15,29 @@
     <!-- home screen -->    
     <div id="view-home" class="app-view" style="display: flex; flex-direction: column; height: 80vh; width: 100%; min-height: 0;">
         <div id="home-standard" style="background: #202830; display: flex; width: 100%; flex: 1; min-height: 0;">
-            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 20px; flex-direction: column;">
-                <div style="display: flex; text-align: center; padding: 10px;">
-                    <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; width: 100%; background: #161c22; margin: -30px -30px 0px -30px; padding: 30px 30px 15px 30px;">&nbsp;</span>
+            <div style="margin: 0; flex: 0 0 20%; min-height: 0; overflow-y: auto; display: flex; padding: 20px; box-sizing: border-box; gap: 0px; flex-direction: column;">
+                <div style="container-type: inline-size; display: flex; width: calc(100% + 40px); margin: -20px -20px 0; text-align: center;">
+                    <span class="text-red" style="display: block; width: 100%; height: 126px; box-sizing: border-box; background: #161c22; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(18px, 15cqw, 48px); line-height: 1; white-space: nowrap; padding: 30px 10px 15px;">
+                        DAILY RUN
+                    </span>
                 </div>
-                
+                <div style="display: flex; flex-direction: column; text-align: center; padding: 10px; gap: 14px;">
+                    <span id="daily-run-date" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(28px, 3vw, 48px); color: #ffffff;">Loading...</span>
+                    <div style="display: flex; align-items: flex-start; justify-content: center; gap: 6px; width: 100%;">
+                        <div style="flex: 1; min-width: 0;">
+                            <img id="daily-run-start-poster" alt="" style="display: block; width: 100%; max-width: 150px; aspect-ratio: 2 / 3; object-fit: cover; margin: 0 auto; border-radius: 2px;">
+                            <div id="daily-run-start-name" style="margin-top: 6px; font-family: 'Graphik', sans-serif; font-size: clamp(11px, 1vw, 16px); color: #f8f8f8; overflow-wrap: anywhere;"></div>
+                        </div>
+                        <span style="flex: 0 0 auto; font-size: clamp(18px, 2vw, 30px); color: #99AABB; padding-top: 30%;">➜</span>
+                        <div style="flex: 1; min-width: 0;">
+                            <img id="daily-run-goal-poster" alt="" style="display: block; width: 100%; max-width: 150px; aspect-ratio: 2 / 3; object-fit: cover; margin: 0 auto; border-radius: 2px;">
+                            <div id="daily-run-goal-name" style="margin-top: 6px; font-family: 'Graphik', sans-serif; font-size: clamp(11px, 1vw, 16px); color: #f8f8f8; overflow-wrap: anywhere;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; text-align: center; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: clamp(12px, 1vw, 16px); font-style: italic;">
+                        <div id="daily-run-modifiers"></div>
+                    </div>
+                </div>
             </div>
 
             <div style="margin: 0 0px; flex: 1; min-height: 0; display: flex; flex-direction: column; border-left: 4px solid #161c22; border-right: 4px solid #161c22; padding: 20px; box-sizing: border-box;">
@@ -135,6 +153,9 @@
                             </div>
                             <button id="settings-btn" class="flex-child primary-blue" style="width: 100%; height: 80px;">
                                 <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Settings</span>
+                            </button>
+                            <button id="daily-run-btn" class="flex-child primary-red" style="width: 100%; min-height: 80px; height: auto; display: flex; align-items: center; justify-content: center; padding: 6px; box-sizing: border-box;">
+                                <span style="position: relative; top: -5px; font-size: 56px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;">Daily Run</span>
                             </button>
                         </div>
                     </div>
@@ -562,6 +583,11 @@
                     </button>
                 </div>
 
+                <!-- row 3 daily run button -->
+                <button id="standard-daily-run-btn" class="primary-red" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
+                    <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Daily Run</span>
+                </button>
+
             </div>
 
         </div>
@@ -751,7 +777,9 @@
                 <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
                     <span class="text-orange" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">BANNED ITEMS</span>
                 </div>
-                <input id="banned-item-search-mobile" placeholder="Search for an item to ban..." style="margin-top: 16px; height: 36px; font-size: 16px; font-family: 'Graphik', sans-serif; color: #f8f8f8;" autocomplete="off">
+                <div class="search-container" style="position: relative; margin-top: 16px;">
+                    <input id="banned-item-search" placeholder="Search for an item to ban..." style="height: 36px; font-size: 16px; font-family: 'Graphik', sans-serif; color: #f8f8f8;" autocomplete="off">
+                </div>
                 <div id="banned-item-container-mobile" style="margin-top: 16px; min-height: 180px; border: 2px solid #99AABB; box-sizing: border-box;">
                     <div id="banned-item-container-text-mobile" style="font-family: 'Graphik', sans-serif; font-size: 16px; color: #99AABB; justify-content: center; align-items: center; display: flex; min-height: 180px;">Banned items will appear here</div>
                 </div>

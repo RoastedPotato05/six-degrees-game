@@ -787,6 +787,33 @@ const BANNED_BIG_3 = [
   }
 ];
 
+const DAILY_RUNS = [
+  {
+    // digger -> verity
+    "date": "10/20/2026",
+    "from_key": "1248832:movie",
+    "to_key": "1283515:movie",
+    "target-name-only": true,
+    "no-mcu": false,
+    "no-big-3": false,
+    "no-tv": false,
+    "no-movies": false,
+    "bannedItems": ["500:person", "1813:person"]
+  },
+  {
+    // backrooms -> the house that jack built
+    "date": "10/21/2026",
+    "from_key": "1083381:movie",
+    "to_key": "398173:movie",
+    "target-name-only": false,
+    "no-mcu": false,
+    "no-big-3": false,
+    "no-tv": false,
+    "no-movies": false,
+    "bannedItems": []
+  }
+];
+
 export const graph = new Graph();
 export const MOBILE_BREAKPOINT = 1000;
 
@@ -808,6 +835,24 @@ let hoveredNodes = new Set();
 let hoveredNeighbors = new Set();
 let selectedNodes = new Set();       // <-- Tracks multiple selected nodes
 let selectedNeighbors = new Set();   // <-- Tracks neighbors of all selected nodes
+let date = new Date();
+const dailyDateString = date.toLocaleDateString('en-US');
+let dailyRunSettingsBackup = null;
+
+function restoreDailyRunSettings() {
+    if (!dailyRunSettingsBackup) return;
+
+    Object.entries(dailyRunSettingsBackup).forEach(([key, value]) => {
+        if (value === null) {
+            localStorage.removeItem(key);
+        } else {
+            localStorage.setItem(key, value);
+        }
+    });
+    dailyRunSettingsBackup = null;
+}
+
+
 
 function getGraphNodeKey(item) {
     return `${item.media_type}:${item.id}`;
@@ -1320,6 +1365,9 @@ if (originalInputValueDescriptor) {
 
 function switchView(viewId, params = {}) {
     const baseView = viewId.replace('-mobile', '');
+    if (baseView !== 'view-standard') {
+        restoreDailyRunSettings();
+    }
     currentActiveView = baseView;
 
     if (baseView !== 'view-stats' && typeof window.resetStatsClearWarning === 'function') {
@@ -2482,6 +2530,103 @@ document.querySelectorAll('#stats-return-btn').forEach(btn => {
 
 
 
+export async function shortestPath(start, end) {
+    const startKey = getGraphNodeKey(start);
+    const endKey = getGraphNodeKey(end);
+    const visited = new Set([startKey]);
+    const detailsCache = new Map();
+
+    const getDetails = async (node) => {
+        const key = getGraphNodeKey(node);
+        if (!detailsCache.has(key)) {
+            detailsCache.set(key, fetchDetails(node.id, node.media_type));
+        }
+        return detailsCache.get(key);
+    };
+
+    const parseKey = (key) => {
+        const separatorIndex = key.indexOf(':');
+        return {
+            media_type: key.slice(0, separatorIndex),
+            id: Number(key.slice(separatorIndex + 1))
+        };
+    };
+
+    const getFullPath = (keys) => Promise.all(keys.map((key) => getDetails(parseKey(key))));
+
+    const getNeighbors = (details, currentType) => {
+        const credits = details.credits || {};
+        const creditItems = [...(credits.cast || []), ...(credits.crew || [])];
+        const neighbors = new Map();
+
+        creditItems.forEach((item) => {
+            if (!item || item.id === undefined) return;
+            const media_type = item.media_type || (currentType === 'person' ? null : 'person');
+            if (!media_type) return;
+            const node = { id: item.id, media_type };
+            neighbors.set(getGraphNodeKey(node), node);
+        });
+
+        return [...neighbors.values()];
+    };
+
+    const endDetails = await getDetails(end);
+    if (startKey === endKey) {
+        const path = [endDetails];
+        console.log('Shortest path found:', path);
+        return path;
+    }
+
+    const endNeighborKeys = new Set(
+        getNeighbors(endDetails, end.media_type).map((node) => getGraphNodeKey(node))
+    );
+
+    const searchDepth = async (frontier, depth) => {
+        if (frontier.length === 0) return null;
+
+        console.log(`Checking depth ${depth} (${frontier.length} item${frontier.length === 1 ? '' : 's'})`);
+        const nextFrontier = [];
+        const expanded = await Promise.all(frontier.map(async ({ key, path }) => {
+            const node = parseKey(key);
+            const details = await getDetails(node);
+            return { path, neighbors: getNeighbors(details, node.media_type) };
+        }));
+
+        let foundPath = null;
+        for (const { path, neighbors } of expanded) {
+            for (const neighbor of neighbors) {
+                const neighborKey = getGraphNodeKey(neighbor);
+                if (visited.has(neighborKey)) continue;
+
+                visited.add(neighborKey);
+                const nextPath = [...path, neighborKey];
+                if (neighborKey === endKey) {
+                    foundPath = nextPath;
+                    break;
+                }
+                if (endNeighborKeys.has(neighborKey)) {
+                    foundPath = [...nextPath, endKey];
+                    break;
+                }
+                nextFrontier.push({ key: neighborKey, path: nextPath });
+            }
+            if (foundPath) break;
+        }
+
+        return foundPath || searchDepth(nextFrontier, depth + 1);
+    };
+
+    const pathKeys = await searchDepth([{ key: startKey, path: [startKey] }], 0);
+    const path = pathKeys ? await getFullPath(pathKeys) : null;
+    console.log(path ? 'Shortest path found:' : 'No path found:', path || {
+        start: startKey,
+        end: endKey,
+        visited: visited.size
+    });
+    return path;
+}
+
+
 
 
 
@@ -2510,6 +2655,7 @@ window.saveGraph = saveGraph;
 window.loadGraph = loadGraph;
 window.createSaveCode = createSaveCode;
 window.importSaveCode = importSaveCode;
+window.shortestPath = shortestPath;
 
 
 window.TMDB_API_KEY = TMDB_API_KEY;
@@ -2517,6 +2663,7 @@ window.BASE_URL = BASE_URL;
 window.BANNED_MCU = BANNED_MCU;
 window.BANNED_BIG_3 = BANNED_BIG_3;
 window.graph = graph;
+window.DAILY_RUNS = DAILY_RUNS;
 
 window.debounceTimer = debounceTimer;
 window.searchResults = searchResults;
@@ -2530,3 +2677,39 @@ window.tInterval = tInterval;
 window.difference = difference;
 window.updatedTime = updatedTime;
 window.gamemodes = gamemodes;
+window.date = date;
+window.dailyDateString = dailyDateString;
+window.restoreDailyRunSettings = restoreDailyRunSettings;
+window.setDailyRunSettings = (dailyRun) => {
+    restoreDailyRunSettings();
+    const settingKeys = [
+        'target-name-only',
+        'no-mcu',
+        'no-big-3',
+        'no-tv',
+        'no-movies',
+        'mediaFilter',
+        'bannedItems'
+    ];
+
+    dailyRunSettingsBackup = Object.fromEntries(
+        settingKeys.map((key) => [key, localStorage.getItem(key)])
+    );
+
+    ['target-name-only', 'no-mcu', 'no-big-3'].forEach((key) => {
+        localStorage.setItem(key, String(Boolean(dailyRun[key])));
+    });
+
+    let mediaFilter = 'none';
+    if (dailyRun['no-tv']) mediaFilter = 'no-tv';
+    if (dailyRun['no-movies']) mediaFilter = 'no-movies';
+    localStorage.setItem('no-tv', String(Boolean(dailyRun['no-tv'])));
+    localStorage.setItem('no-movies', String(Boolean(dailyRun['no-movies'])));
+    localStorage.setItem('mediaFilter', mediaFilter);
+
+    const bannedItems = Array.isArray(dailyRun.bannedItems) ? dailyRun.bannedItems : [];
+    localStorage.setItem('bannedItems', JSON.stringify(bannedItems.map((key) => {
+        const [id, media_type] = String(key).split(':');
+        return { id: Number(id), media_type };
+    })));
+};

@@ -146,6 +146,25 @@ textarea::placeholder {
   color: #884e88;
 }
 
+.primary-red {
+  display:block;
+  width:100%;
+  background: #a54a43;
+  color: #fff;
+  border:none;
+  border-radius: 16px;
+  cursor:pointer;
+}
+
+.primary-red:hover {
+  background: #833c36;
+  transition: background 0.1s ease-in-out;
+}
+
+.text-red {
+  color: #a54a43;
+}
+
 .text-gray {
   color: #99AABB;
 }

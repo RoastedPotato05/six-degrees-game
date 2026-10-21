@@ -101,6 +101,117 @@ if (!randomItems) {
     randomItems = await fetchRandomItems();
 }
 
+let currentDailyRun = null;
+
+function createDailyRunData(run, random) {
+    const parseKey = (key) => {
+        const [id, media_type] = String(key).split(':');
+        return { id: Number(id), media_type };
+    };
+
+    if (run) {
+        return Promise.all([
+            window.fetchDetails(...Object.values(parseKey(run.from_key))),
+            window.fetchDetails(...Object.values(parseKey(run.to_key)))
+        ]).then(([start, goal]) => ({ start, goal, modifiers: run }));
+    }
+
+    const candidates = Object.values(randomItems).flat();
+    const startItem = candidates[Math.floor(random() * candidates.length)];
+    let goalItem = candidates[Math.floor(random() * candidates.length)];
+    while (goalItem.id === startItem.id && goalItem.media_type === startItem.media_type) {
+        goalItem = candidates[Math.floor(random() * candidates.length)];
+    }
+
+    return Promise.all([
+        window.fetchDetails(startItem.id, startItem.media_type),
+        window.fetchDetails(goalItem.id, goalItem.media_type)
+    ]).then(([start, goal]) => ({
+        start,
+        goal,
+        modifiers: {
+            'target-name-only': false,
+            'no-mcu': false,
+            'no-big-3': false,
+            'no-tv': false,
+            'no-movies': false,
+            bannedItems: []
+        }
+    }));
+}
+
+async function renderDailyRun(data) {
+    const dateElement = document.getElementById('daily-run-date');
+    const startPoster = document.getElementById('daily-run-start-poster');
+    const goalPoster = document.getElementById('daily-run-goal-poster');
+    const startName = document.getElementById('daily-run-start-name');
+    const goalName = document.getElementById('daily-run-goal-name');
+    const modifiersElement = document.getElementById('daily-run-modifiers');
+    if (!dateElement || !startPoster || !goalPoster || !startName || !goalName || !modifiersElement) return;
+
+    dateElement.textContent = window.dailyDateString;
+    const getImage = (item) => item.imageUrl ||
+        (item.poster_path || item.profile_path
+            ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.profile_path}`
+            : '');
+    const getName = (item) => item.title || item.name || 'Unknown item';
+
+    startPoster.src = getImage(data.start);
+    goalPoster.src = getImage(data.goal);
+    startPoster.alt = getName(data.start);
+    goalPoster.alt = getName(data.goal);
+    startName.textContent = getName(data.start);
+    goalName.textContent = getName(data.goal);
+
+    const modifierLabels = [
+        ['target-name-only', 'Target name only'],
+        ['no-mcu', 'No MCU'],
+        ['no-big-3', "No 'Big 3' directors"],
+        ['no-tv', 'No TV shows'],
+        ['no-movies', 'No movies']
+    ].filter(([key]) => data.modifiers[key]).map(([, label]) => label);
+
+    if (data.modifiers.bannedItems?.length) {
+        const bannedNames = await Promise.all(data.modifiers.bannedItems.map(async (key) => {
+            const [id, mediaType] = String(key).split(':');
+            try {
+                const item = await window.fetchDetails(Number(id), mediaType);
+                return getName(item);
+            } catch (error) {
+                console.error(`Failed to resolve daily run banned item ${key}:`, error);
+                return key;
+            }
+        }));
+        modifierLabels.push(`Banned items: ${bannedNames.join(', ')}`);
+    }
+
+    modifiersElement.innerHTML = '';
+    if (modifierLabels.length === 0) {
+        modifiersElement.textContent = 'No Modifiers';
+        return;
+    }
+
+    const heading = document.createElement('div');
+    heading.textContent = 'Modifiers:';
+    heading.style.opacity = '0.5';
+    heading.style.marginBottom = '12px';
+    modifiersElement.appendChild(heading);
+
+    modifierLabels.forEach((label) => {
+        const modifier = document.createElement('div');
+        modifier.textContent = label;
+        modifier.style.marginBottom = '6px';
+        modifiersElement.appendChild(modifier);
+    });
+}
+
+const configuredDailyRun = window.DAILY_RUNS.find((run) => run.date === window.dailyDateString);
+currentDailyRun = await createDailyRunData(
+    configuredDailyRun,
+    createDailyRandom(window.dailyDateString)
+);
+await renderDailyRun(currentDailyRun);
+
 
 // --- 1. SEARCH INPUT LISTENERS (Attached to both Desktop & Mobile) ---
 getAll('standard-search-start').forEach(input => {
@@ -206,10 +317,11 @@ getAll('standard-start-run-btn').forEach(btn => {
 
 
 // Helper to pick a random item
-async function randomizeInput(inputElement, otherInputElement) {
+async function randomizeInput(inputElement, otherInputElement, random = Math.random) {
     while (true) {
-        const category = Object.keys(randomItems)[Math.floor(Math.random() * Object.keys(randomItems).length)];
-        const item = randomItems[category][Math.floor(Math.random() * randomItems[category].length)];
+        const categories = Object.keys(randomItems);
+        const category = categories[Math.floor(random() * categories.length)];
+        const item = randomItems[category][Math.floor(random() * randomItems[category].length)];
         
         const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
         const noTv = mediaFilter === 'no-tv' || localStorage.getItem('no-tv') === 'true';
@@ -301,3 +413,35 @@ window.startRandomRun = async () => {
     await randomizeInput(goalInput, startInput);
     startRunBtn.click();
 };
+
+function createDailyRandom(seedText) {
+    let seed = 0;
+    for (const character of seedText) {
+        seed = (seed * 31 + character.charCodeAt(0)) >>> 0;
+    }
+
+    return () => {
+        seed = (1664525 * seed + 1013904223) >>> 0;
+        return seed / 4294967296;
+    };
+}
+
+function parseDailyRunKey(key) {
+    const [id, media_type] = String(key).split(':');
+    return { id: Number(id), media_type };
+}
+
+const dailyRunButtons = [
+    ...getAll('daily-run-btn'),
+    ...getAll('standard-daily-run-btn')
+];
+
+dailyRunButtons.forEach((button) => {
+    button.addEventListener('click', async () => {
+        window.setDailyRunSettings(currentDailyRun.modifiers);
+        window.switchView('view-standard', {
+            start: currentDailyRun.start,
+            goal: currentDailyRun.goal
+        });
+    });
+});
