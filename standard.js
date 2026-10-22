@@ -554,6 +554,9 @@ function renderTargetInfo(goalData) {
         if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
             bannedItems = bannedItems.concat(BANNED_BIG_3);
         }
+        if (localStorage.getItem('no-talk-shows') === 'true' && typeof BANNED_AWARD_TALK_SHOWS !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_AWARD_TALK_SHOWS);
+        }
 
         const mediaFilter = localStorage.getItem('mediaFilter') || 'none';
         rawItems = rawItems.filter(item => {
@@ -699,11 +702,22 @@ async function loadStep(id, type) {                         // function for upda
     if (nameMovieListMobile) nameMovieListMobile.innerHTML = '';
 
     const tabsContainer = document.createElement('div');
+    activeTabsWrapper.classList.add('standard-tabs-wrapper');
+    tabsContainer.className = 'standard-tabs';
     tabsContainer.style.display = 'flex';
     tabsContainer.style.gap = '0px';
-    tabsContainer.style.flexWrap = 'wrap';
+    tabsContainer.style.flexWrap = 'nowrap';
 
     if (activeTabsWrapper) activeTabsWrapper.appendChild(tabsContainer);
+    const updateTabOverflowState = () => {
+        const maxScrollLeft = tabsContainer.scrollWidth - tabsContainer.clientWidth;
+        const hasOverflow = maxScrollLeft > 1;
+        activeTabsWrapper.classList.toggle('no-overflow', !hasOverflow);
+        activeTabsWrapper.classList.toggle('at-start', !hasOverflow || tabsContainer.scrollLeft <= 1);
+        activeTabsWrapper.classList.toggle('at-end', !hasOverflow || tabsContainer.scrollLeft >= maxScrollLeft - 1);
+    };
+    tabsContainer.addEventListener('scroll', updateTabOverflowState, { passive: true });
+    requestAnimationFrame(updateTabOverflowState);
 
     let name = '';
     let imagePath = null;
@@ -832,6 +846,9 @@ async function loadStep(id, type) {                         // function for upda
 
         if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
             bannedItems = bannedItems.concat(BANNED_BIG_3);
+        }
+        if (localStorage.getItem('no-talk-shows') === 'true' && typeof BANNED_AWARD_TALK_SHOWS !== 'undefined') {
+            bannedItems = bannedItems.concat(BANNED_AWARD_TALK_SHOWS);
         }
 
 
@@ -1154,7 +1171,6 @@ async function loadStep(id, type) {                         // function for upda
     const rawCastMovies = data.credits?.cast || [];
     const crewCredits = data.credits?.crew || [];
 
-    const importantDepartments = ['Directing', 'Production', 'Writing', 'Editing', 'Sound', 'Camera'];
     const categories = {};
 
     // Helper to filter out exact duplicate credits while preserving distinctions if core metrics differ
@@ -1181,7 +1197,7 @@ async function loadStep(id, type) {                         // function for upda
     }
 
     crewCredits.forEach(credit => {
-        if (credit.department && importantDepartments.includes(credit.department)) {
+        if (credit.department) {
             const deptKey = credit.department.toUpperCase();
             if (!categories[deptKey]) {
                 categories[deptKey] = [];
@@ -1257,7 +1273,10 @@ async function loadStep(id, type) {                         // function for upda
         }
     });
 }
-    requestAnimationFrame(() => updateMobileSearchLayout());
+    requestAnimationFrame(() => {
+        updateMobileSearchLayout();
+        updateTabOverflowState();
+    });
     console.log('Data loaded:', data);
     console.log('Goal data:', goalData);
     if (!isRunCompleted) {

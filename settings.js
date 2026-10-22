@@ -36,7 +36,7 @@ export function initSettings() {
     });
 
     // Load saved checkbox states from localStorage (Only actual checkboxes here)
-    const checkboxIds = ['target-name-only', 'no-mcu', 'no-big-3'];
+    const checkboxIds = ['target-name-only', 'no-mcu', 'no-big-3', 'no-talk-shows'];
     checkboxIds.forEach(id => {
         getSettingElements(id).forEach((el) => {
             const savedVal = localStorage.getItem(id);
@@ -81,7 +81,7 @@ export function initSettings() {
 window.initSettings = initSettings;
 
 const saveCheckboxStates = () => {
-    const checkboxIds = ['target-name-only', 'no-mcu', 'no-big-3'];
+    const checkboxIds = ['target-name-only', 'no-mcu', 'no-big-3', 'no-talk-shows'];
     checkboxIds.forEach(id => {
         const el = getFirstVisibleSettingElement(id);
         if (el) {

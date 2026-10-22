@@ -117,56 +117,105 @@ function createDailyRunData(run, random) {
     }
 
     const candidates = Object.values(randomItems).flat();
-    const startItem = candidates[Math.floor(random() * candidates.length)];
-    let goalItem = candidates[Math.floor(random() * candidates.length)];
-    while (goalItem.id === startItem.id && goalItem.media_type === startItem.media_type) {
-        goalItem = candidates[Math.floor(random() * candidates.length)];
-    }
+    const isAllowed = (item, modifiers) => {
+        if (modifiers['no-tv'] && item.media_type === 'tv') return false;
+        if (modifiers['no-movies'] && item.media_type === 'movie') return false;
 
-    return Promise.all([
-        window.fetchDetails(startItem.id, startItem.media_type),
-        window.fetchDetails(goalItem.id, goalItem.media_type)
-    ]).then(([start, goal]) => ({
-        start,
-        goal,
-        modifiers: {
-            'target-name-only': false,
-            'no-mcu': false,
-            'no-big-3': false,
+        const bannedLists = [
+            modifiers['no-mcu'] ? window.BANNED_MCU : [],
+            modifiers['no-big-3'] ? window.BANNED_BIG_3 : [],
+            modifiers['no-talk-shows'] ? window.BANNED_AWARD_TALK_SHOWS : []
+        ];
+        return !bannedLists.flat().some((banned) =>
+            banned.id === item.id && banned.media_type === item.media_type
+        );
+    };
+
+    const createModifiers = () => {
+        const modifiers = {
+            'target-name-only': random() < 0.3,
+            'no-mcu': random() < 0.8,
+            'no-big-3': random() < 0.4,
+            'no-talk-shows': true,
             'no-tv': false,
             'no-movies': false,
             bannedItems: []
+        };
+
+        if (random() < 0.2) {
+            if (random() < 0.5) {
+                modifiers['no-tv'] = true;
+            } else {
+                modifiers['no-movies'] = true;
+            }
         }
-    }));
+
+        return modifiers;
+    };
+
+    const selectDistinctItems = (available) => {
+        if (available.length < 2) return null;
+        const startItem = available[Math.floor(random() * available.length)];
+        const goalCandidates = available.filter((item) =>
+            item.id !== startItem.id || item.media_type !== startItem.media_type
+        );
+        return {
+            startItem,
+            goalItem: goalCandidates[Math.floor(random() * goalCandidates.length)]
+        };
+    };
+
+    return (async () => {
+        const maxAttempts = 12;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const modifiers = createModifiers();
+            const available = candidates.filter((item) => isAllowed(item, modifiers));
+            const selected = selectDistinctItems(available);
+            if (!selected) continue;
+
+            try {
+                const [start, goal] = await Promise.all([
+                    window.fetchDetails(selected.startItem.id, selected.startItem.media_type, { checkLocalImage: false }),
+                    window.fetchDetails(selected.goalItem.id, selected.goalItem.media_type, { checkLocalImage: false })
+                ]);
+                const path = await window.shortestPath(start, goal, {
+                    modifiers,
+                    maxPathLength: 10,
+                    returnPathDetails: false
+                });
+
+                if (path) {
+                    const [displayStart, displayGoal] = await Promise.all([
+                        window.fetchDetails(start.id, start.media_type),
+                        window.fetchDetails(goal.id, goal.media_type)
+                    ]);
+                    return { start: displayStart, goal: displayGoal, path, modifiers };
+                }
+            } catch (error) {
+                console.error(`Daily run attempt ${attempt + 1} failed:`, error);
+            }
+        }
+
+        throw new Error('Unable to generate a daily run with a valid path after the retry limit.');
+    })();
 }
 
-async function renderDailyRun(data) {
-    const dateElement = document.getElementById('daily-run-date');
-    const startPoster = document.getElementById('daily-run-start-poster');
-    const goalPoster = document.getElementById('daily-run-goal-poster');
-    const startName = document.getElementById('daily-run-start-name');
-    const goalName = document.getElementById('daily-run-goal-name');
-    const modifiersElement = document.getElementById('daily-run-modifiers');
-    if (!dateElement || !startPoster || !goalPoster || !startName || !goalName || !modifiersElement) return;
+window.fetchDailyRunCandidates = fetchRandomItems;
+window.generateDailyRunData = createDailyRunData;
+window.resolveDailyRunGenerator();
 
-    dateElement.textContent = window.dailyDateString;
+async function renderDailyRun(data) {
     const getImage = (item) => item.imageUrl ||
         (item.poster_path || item.profile_path
             ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.profile_path}`
             : '');
     const getName = (item) => item.title || item.name || 'Unknown item';
 
-    startPoster.src = getImage(data.start);
-    goalPoster.src = getImage(data.goal);
-    startPoster.alt = getName(data.start);
-    goalPoster.alt = getName(data.goal);
-    startName.textContent = getName(data.start);
-    goalName.textContent = getName(data.goal);
-
     const modifierLabels = [
         ['target-name-only', 'Target name only'],
         ['no-mcu', 'No MCU'],
         ['no-big-3', "No 'Big 3' directors"],
+        ['no-talk-shows', 'No talk shows'],
         ['no-tv', 'No TV shows'],
         ['no-movies', 'No movies']
     ].filter(([key]) => data.modifiers[key]).map(([, label]) => label);
@@ -185,31 +234,96 @@ async function renderDailyRun(data) {
         modifierLabels.push(`Banned items: ${bannedNames.join(', ')}`);
     }
 
-    modifiersElement.innerHTML = '';
-    if (modifierLabels.length === 0) {
-        modifiersElement.textContent = 'No Modifiers';
-        return;
-    }
+    const panels = [
+        {
+            date: 'daily-run-date',
+            startPoster: 'daily-run-start-poster',
+            goalPoster: 'daily-run-goal-poster',
+            startName: 'daily-run-start-name',
+            goalName: 'daily-run-goal-name',
+            modifiers: 'daily-run-modifiers'
+        },
+        {
+            date: 'daily-run-date-mobile',
+            startPoster: 'daily-run-start-poster-mobile',
+            goalPoster: 'daily-run-goal-poster-mobile',
+            startName: 'daily-run-start-name-mobile',
+            goalName: 'daily-run-goal-name-mobile',
+            modifiers: 'daily-run-modifiers-mobile'
+        }
+    ];
 
-    const heading = document.createElement('div');
-    heading.textContent = 'Modifiers:';
-    heading.style.opacity = '0.5';
-    heading.style.marginBottom = '12px';
-    modifiersElement.appendChild(heading);
+    panels.forEach((panel) => {
+        const dateElement = document.getElementById(panel.date);
+        const startPoster = document.getElementById(panel.startPoster);
+        const goalPoster = document.getElementById(panel.goalPoster);
+        const startName = document.getElementById(panel.startName);
+        const goalName = document.getElementById(panel.goalName);
+        const modifiersElement = document.getElementById(panel.modifiers);
+        if (!dateElement || !startPoster || !goalPoster || !startName || !goalName || !modifiersElement) return;
 
-    modifierLabels.forEach((label) => {
-        const modifier = document.createElement('div');
-        modifier.textContent = label;
-        modifier.style.marginBottom = '6px';
-        modifiersElement.appendChild(modifier);
+        dateElement.textContent = window.dailyDateString;
+        startPoster.src = getImage(data.start);
+        goalPoster.src = getImage(data.goal);
+        startPoster.alt = getName(data.start);
+        goalPoster.alt = getName(data.goal);
+        startName.textContent = getName(data.start);
+        goalName.textContent = getName(data.goal);
+        modifiersElement.innerHTML = '';
+
+        if (modifierLabels.length === 0) {
+            modifiersElement.textContent = 'No Modifiers';
+            return;
+        }
+
+        const heading = document.createElement('div');
+        heading.textContent = 'Modifiers:';
+        heading.style.opacity = '0.5';
+        heading.style.marginBottom = '12px';
+        modifiersElement.appendChild(heading);
+
+        modifierLabels.forEach((label) => {
+            const modifier = document.createElement('div');
+            modifier.textContent = label;
+            modifier.style.marginBottom = '6px';
+            modifiersElement.appendChild(modifier);
+        });
     });
 }
 
+await window.dailyRunsReady;
 const configuredDailyRun = window.DAILY_RUNS.find((run) => run.date === window.dailyDateString);
-currentDailyRun = await createDailyRunData(
-    configuredDailyRun,
-    createDailyRandom(window.dailyDateString)
-);
+if (configuredDailyRun) {
+    currentDailyRun = await createDailyRunData(configuredDailyRun, createDailyRandom(window.dailyDateString));
+} else {
+    const movieCandidates = Object.values(randomItems).flat().filter((item) => item.media_type === 'movie');
+    if (movieCandidates.length < 2) {
+        throw new Error('Daily run fallback requires at least two movie candidates.');
+    }
+    const random = createDailyRandom(window.dailyDateString);
+    const startItem = movieCandidates[Math.floor(random() * movieCandidates.length)];
+    let goalItem = movieCandidates[Math.floor(random() * movieCandidates.length)];
+    while (goalItem.id === startItem.id || goalItem.media_type !== startItem.media_type) {
+        goalItem = movieCandidates[Math.floor(random() * movieCandidates.length)];
+    }
+    const [start, goal] = await Promise.all([
+        window.fetchDetails(startItem.id, startItem.media_type),
+        window.fetchDetails(goalItem.id, goalItem.media_type)
+    ]);
+    currentDailyRun = {
+        start,
+        goal,
+        modifiers: {
+            'target-name-only': false,
+            'no-mcu': false,
+            'no-big-3': false,
+            'no-talk-shows': false,
+            'no-tv': false,
+            'no-movies': false,
+            bannedItems: []
+        }
+    };
+}
 await renderDailyRun(currentDailyRun);
 
 
@@ -289,6 +403,9 @@ getAll('standard-start-run-btn').forEach(btn => {
             if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined') {
                 bannedItems = bannedItems.concat(BANNED_BIG_3);
             }
+            if (localStorage.getItem('no-talk-shows') === 'true' && typeof BANNED_AWARD_TALK_SHOWS !== 'undefined') {
+                bannedItems = bannedItems.concat(BANNED_AWARD_TALK_SHOWS);
+            }
 
             const isBanned = bannedItems.some(b => b.id === data.id && b.media_type === data.media_type);
             if (isBanned) {
@@ -334,6 +451,9 @@ async function randomizeInput(inputElement, otherInputElement, random = Math.ran
             continue;
         }
         if (localStorage.getItem('no-big-3') === 'true' && typeof BANNED_BIG_3 !== 'undefined' && BANNED_BIG_3.some(b => b.id === item.id && b.media_type === item.media_type)) {
+            continue;
+        }
+        if (localStorage.getItem('no-talk-shows') === 'true' && typeof BANNED_AWARD_TALK_SHOWS !== 'undefined' && BANNED_AWARD_TALK_SHOWS.some(b => b.id === item.id && b.media_type === item.media_type)) {
             continue;
         }
 

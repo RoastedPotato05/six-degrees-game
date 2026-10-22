@@ -329,6 +329,10 @@
                                     <input type="checkbox" id="no-mcu" name="no-mcu" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88; transition: accent-color 0.1s ease-in-out;">
                                 </div>
                                 <div style="display: flex; flex-direction: row; align-items: center;">
+                                    <label for="no-talk-shows" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 280px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No Award/Talk Shows</label>
+                                    <input type="checkbox" id="no-talk-shows" name="no-talk-shows" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88; transition: accent-color 0.1s ease-in-out;">
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center;">
                                     <label for="no-big-3" style="font-family: 'Graphik', sans-serif; font-weight: 400; font-size: 24px; width: 280px; box-sizing: border-box; padding: 4px 8px;" class="text-gray">No 'Big 3' Directors</label>
                                     <input type="checkbox" id="no-big-3" name="no-big-3" value="true" style="cursor: pointer; width: 20px; height: 20px; margin-left: 20px; accent-color: #884e88; transition: accent-color 0.1s ease-in-out;">
                                 </div>
@@ -587,6 +591,21 @@
                 <button id="standard-daily-run-btn" class="primary-red" style="flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; border-radius: 6px;">
                     <span style="font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8; line-height: 1; white-space: nowrap;">Daily Run</span>
                 </button>
+                <div class="daily-run-mobile-card">
+                    <span id="daily-run-date-mobile" class="daily-run-mobile-date">Loading...</span>
+                    <div class="daily-run-mobile-posters">
+                        <div class="daily-run-mobile-poster-item">
+                            <img id="daily-run-start-poster-mobile" alt="">
+                            <div id="daily-run-start-name-mobile" class="daily-run-mobile-name"></div>
+                        </div>
+                        <span class="daily-run-mobile-arrow">➜</span>
+                        <div class="daily-run-mobile-poster-item">
+                            <img id="daily-run-goal-poster-mobile" alt="">
+                            <div id="daily-run-goal-name-mobile" class="daily-run-mobile-name"></div>
+                        </div>
+                    </div>
+                    <div id="daily-run-modifiers-mobile" class="daily-run-mobile-modifiers"></div>
+                </div>
 
             </div>
 
@@ -674,10 +693,10 @@
 
     <!-- PLACEHOLDER 2: Mobile Statistics Screen -->
     <div id="view-stats-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box;">
-        <div style="display: flex; flex-direction: row; gap: 10px; align-items: center; width: 100%; height: 50px; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; background-color: #161c22;">
-            <div style="width: 25%; min-width: 90px;"></div>
-            <span style="display: flex; justify-content: center; width: 50%; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 24px; color: #659157; letter-spacing: 0.5px; white-space: nowrap;">STATS</span>
-            <div style="width: 25%; min-width: 90px;"></div>
+        <div style="display: flex; flex-direction: row; gap: 10px; justify-content: center; align-items: center; width: 100%; height: auto; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; background-color: #161c22;">
+            
+            <span style="display: flex; justify-content: center; width: 50%; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; color: #659157; letter-spacing: 0.5px; white-space: nowrap;">STATS</span>
+            
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 28px; padding: 14px; box-sizing: border-box; width: 100%;">
@@ -724,11 +743,13 @@
     </div>
 
     <!-- Mobile settings screen -->
-    <div id="view-settings-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px; padding-bottom: 30px;">
-        <div style="display: flex; justify-content: center; align-items: center; padding: 10px 0; border-bottom: 2px solid #2c3844;">
-            <span style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: clamp(28px, 8vw, 42px); color: #2f67b1;">SETTINGS</span>
+    <div id="view-settings-mobile" class="app-view" style="background: #202830; display: none; flex-direction: column; width: 100%; flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding-bottom: 30px;">
+        <div style="display: flex; flex-direction: row; gap: 10px; justify-content: center; align-items: center; width: 100%; height: auto; padding: 0 16px; box-sizing: border-box; flex-shrink: 0; background-color: #161c22;">
+            
+            <span class="text-blue" style="display: flex; justify-content: center; width: 50%; font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 60px; letter-spacing: 0.5px; white-space: nowrap;">SETTINGS</span>
+            
         </div>
-        <div style="display: flex; flex-direction: column; width: 100%; gap: 28px; margin-top: 20px;">
+        <div style="display: flex; flex-direction: column; width: 100%; gap: 28px; margin-top: 20px; padding: 20px; box-sizing: border-box;">
             <section style="display: flex; flex-direction: column; width: 100%;">
                 <div style="display: flex; align-items: center; min-height: 54px; border-bottom: 2px solid #FFFFFF; padding: 8px 0; box-sizing: border-box;">
                     <span class="text-green" style="font-family: 'Graphik', sans-serif; font-weight: 600; font-size: 30px;">AUDIO</span>
@@ -746,6 +767,7 @@
                 <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px; color: #99AABB; font-family: 'Graphik', sans-serif; font-size: 16px;">
                     <label style="display: flex; align-items: center; justify-content: space-between;">Target Name Only<input id="target-name-only-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
                     <label style="display: flex; align-items: center; justify-content: space-between;">No MCU<input id="no-mcu-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
+                    <label style="display: flex; align-items: center; justify-content: space-between;">No Award/Talk Shows<input id="no-talk-shows-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
                     <label style="display: flex; align-items: center; justify-content: space-between;">No 'Big 3' Directors<input id="no-big-3-mobile" type="checkbox" style="width: 20px; height: 20px; accent-color: #884e88;"></label>
                     <span style="font-size: 11px; color: #99AABB;">(Steven Spielberg, Christopher Nolan, Quentin Tarantino, and their movies)</span>
                     <div style="display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -866,7 +888,7 @@
             <!-- Settings Return Footer Section -->
             <div id="footer-settings-section" style="display: none; flex-direction: row; width: 100%; height: auto; padding: 12px 10px; box-sizing: border-box; justify-content: center; align-items: center;">
                 <div style="width: 50%; display: flex; justify-content: center; align-items: center;">
-                    <button id="settings-return-btn" style="display: flex; align-items: center; justify-content: center; min-height: 48px; width: 100%; font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange">
+                    <button id="settings-return-btn" style="display: flex; align-items: center; justify-content: center; min-height: 60px; width: 100%; font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange">
                         <span style="display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1;">Return</span>
                     </button>
                 </div>
@@ -875,12 +897,12 @@
             <!-- Stats Return and Clear Footer Section -->
             <div id="footer-stats-section" style="display: none; flex-direction: row; width: 100%; height: auto; padding: 12px 10px; gap: 10px; box-sizing: border-box; justify-content: center; align-items: center;">
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
-                    <button id="stats-return-btn" style="display: flex; align-items: center; justify-content: center; min-height: 48px; width: 100%; font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange">
+                    <button id="stats-return-btn" style="display: flex; align-items: center; justify-content: center; min-height: 60px; width: 100%; font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-orange">
                         <span style="display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1;">Return</span>
                     </button>
                 </div>
                 <div style="flex: 1; display: flex; justify-content: center; align-items: center; position: relative;">
-                    <button id="stats-clear-btn" style="display: flex; align-items: center; justify-content: center; min-height: 48px; width: 100%; font-size: 24px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-purple">
+                    <button id="stats-clear-btn" style="display: flex; align-items: center; justify-content: center; min-height: 60px; width: 100%; font-size: 30px; font-family: 'Graphik', sans-serif; font-weight: 600; color: #f8f8f8;" class="primary-purple">
                         <span style="display: flex; align-items: center; justify-content: center; height: 100%; line-height: 1;">Clear</span>
                     </button>
                 </div>
