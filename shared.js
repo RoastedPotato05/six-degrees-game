@@ -28683,7 +28683,9 @@ export async function shortestPath(start, end, options = {}) {
         ...(modifiers['no-mcu'] ? BANNED_MCU : []),
         ...(modifiers['no-big-3'] ? BANNED_BIG_3 : []),
         ...(modifiers['no-talk-shows'] ? BANNED_AWARD_TALK_SHOWS : [])
-    ].map((item) => `${item.media_type}:${item.id}`));
+    ].map((item) => typeof item === 'string'
+        ? item
+        : `${item.media_type}:${item.id}`));
 
     const isAllowed = (node) => {
         if (modifiers['no-tv'] && node.media_type === 'tv') return false;
@@ -28913,7 +28915,7 @@ window.generateDailyRunsThrough = async function (stopDateText) {
 };
 
 // Uncomment manually after the app has loaded to generate and print a run list:
-window.generateDailyRunsThrough('11/01/2026');
+// window.generateDailyRunsThrough('11/01/2026');
 
 
 window.TMDB_API_KEY = TMDB_API_KEY;

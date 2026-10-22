@@ -126,9 +126,60 @@ function createDailyRunData(run, random) {
             modifiers['no-big-3'] ? window.BANNED_BIG_3 : [],
             modifiers['no-talk-shows'] ? window.BANNED_AWARD_TALK_SHOWS : []
         ];
-        return !bannedLists.flat().some((banned) =>
-            banned.id === item.id && banned.media_type === item.media_type
+        const explicitlyBanned = modifiers.bannedItems || [];
+        const itemKey = `${item.media_type}:${item.id}`;
+        return !bannedLists.flat().concat(explicitlyBanned).some((banned) =>
+            typeof banned === 'string'
+                ? banned === itemKey
+                : banned.id === item.id && banned.media_type === item.media_type
         );
+    };
+
+    const addTopRelatedBan = (item, modifiers) => {
+        const credits = item.credits || {};
+        let candidates = [];
+
+        if (item.media_type === 'movie' || item.media_type === 'tv') {
+            candidates = (credits.cast || []).map((credit) => ({
+                id: credit.id,
+                media_type: 'person',
+                popularity: credit.popularity || 0
+            }));
+        } else if (item.media_type === 'person') {
+            const knownDepartment = String(item.known_for_department || '').trim().toLowerCase();
+            if (knownDepartment === 'acting') {
+                candidates = (credits.cast || []).map((credit) => ({
+                    id: credit.id,
+                    media_type: credit.media_type || 'movie',
+                    popularity: credit.popularity || 0
+                }));
+            } else if (knownDepartment) {
+                candidates = (credits.crew || [])
+                    .filter((credit) =>
+                        String(credit.department || '').trim().toLowerCase() === knownDepartment
+                    )
+                    .map((credit) => ({
+                        id: credit.id,
+                        media_type: credit.media_type || 'movie',
+                        popularity: credit.popularity || 0
+                    }));
+            }
+        }
+
+        const topRelated = candidates
+            .filter((candidate) => isAllowed(candidate, modifiers))
+            .sort((a, b) => b.popularity - a.popularity)[0];
+        if (!topRelated) return;
+
+        const topRelatedKey = `${topRelated.media_type}:${topRelated.id}`;
+        const alreadyBanned = modifiers.bannedItems.some((banned) =>
+            typeof banned === 'string'
+                ? banned === topRelatedKey
+                : banned.id === topRelated.id && banned.media_type === topRelated.media_type
+        );
+        if (!alreadyBanned) {
+            modifiers.bannedItems.push(topRelatedKey);
+        }
     };
 
     const createModifiers = () => {
@@ -178,6 +229,10 @@ function createDailyRunData(run, random) {
                     window.fetchDetails(selected.startItem.id, selected.startItem.media_type, { checkLocalImage: false }),
                     window.fetchDetails(selected.goalItem.id, selected.goalItem.media_type, { checkLocalImage: false })
                 ]);
+                if (random() < 0.7) {
+                    addTopRelatedBan(start, modifiers);
+                    addTopRelatedBan(goal, modifiers);
+                }
                 const path = await window.shortestPath(start, goal, {
                     modifiers,
                     maxPathLength: 10,
