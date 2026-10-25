@@ -1,6 +1,7 @@
 // shared.js
 import Graph from "https://esm.sh/graphology@0.26.0";
 import Sigma from "https://esm.sh/sigma@3.0.3";
+import { DAILY_RUNS } from "./daily-runs.js";
 
 
 const TMDB_API_KEY = '1bb166cc311693519c574fe0560e8d05';
@@ -26930,22 +26931,7 @@ const BANNED_AWARD_TALK_SHOWS = [
   }
 ];
 
-let DAILY_RUNS = [];
-const dailyRunsReady = fetch('daily-runs.txt')
-  .then((response) => {
-    if (!response.ok) throw new Error(`Failed to load daily-runs.txt (${response.status})`);
-    return response.json();
-  })
-  .then((runs) => {
-    if (!Array.isArray(runs)) throw new Error('daily-runs.txt must contain a JSON array.');
-    DAILY_RUNS = runs;
-    window.DAILY_RUNS = DAILY_RUNS;
-    return DAILY_RUNS;
-  })
-  .catch((error) => {
-    console.error('Daily runs could not be loaded:', error);
-    return DAILY_RUNS;
-  });
+const dailyRunsReady = Promise.resolve(DAILY_RUNS);
 
 export const graph = new Graph();
 export const MOBILE_BREAKPOINT = 1000;
@@ -26989,6 +26975,13 @@ function restoreDailyRunSettings() {
 
 function getGraphNodeKey(item) {
     return `${item.media_type}:${item.id}`;
+}
+
+function normalizeDailyItemKey(key) {
+    const [first, second] = String(key).split(':');
+    return Number.isNaN(Number(first))
+        ? `${first}:${second}`
+        : `${second}:${first}`;
 }
 
 function getGraphNodeColor(mediaType) {
@@ -28684,7 +28677,7 @@ export async function shortestPath(start, end, options = {}) {
         ...(modifiers['no-big-3'] ? BANNED_BIG_3 : []),
         ...(modifiers['no-talk-shows'] ? BANNED_AWARD_TALK_SHOWS : [])
     ].map((item) => typeof item === 'string'
-        ? item
+        ? normalizeDailyItemKey(item)
         : `${item.media_type}:${item.id}`));
 
     const isAllowed = (node) => {
@@ -28915,7 +28908,7 @@ window.generateDailyRunsThrough = async function (stopDateText) {
 };
 
 // Uncomment manually after the app has loaded to generate and print a run list:
-// window.generateDailyRunsThrough('11/01/2026');
+// window.generateDailyRunsThrough('12/01/2026');
 
 
 window.TMDB_API_KEY = TMDB_API_KEY;
@@ -28975,7 +28968,9 @@ window.setDailyRunSettings = (dailyRun) => {
 
     const bannedItems = Array.isArray(dailyRun.bannedItems) ? dailyRun.bannedItems : [];
     localStorage.setItem('bannedItems', JSON.stringify(bannedItems.map((key) => {
-        const [id, media_type] = String(key).split(':');
+        const [first, second] = String(key).split(':');
+        const id = Number.isNaN(Number(first)) ? Number(second) : Number(first);
+        const media_type = Number.isNaN(Number(first)) ? first : second;
         return { id: Number(id), media_type };
     })));
 };

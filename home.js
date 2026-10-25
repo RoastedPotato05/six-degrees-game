@@ -151,7 +151,8 @@ function createDailyRunData(run, random) {
                 candidates = (credits.cast || []).map((credit) => ({
                     id: credit.id,
                     media_type: credit.media_type || 'movie',
-                    popularity: credit.popularity || 0
+                    popularity: credit.popularity || 0,
+                    vote_count: credit.vote_count || 0
                 }));
             } else if (knownDepartment) {
                 candidates = (credits.crew || [])
@@ -161,14 +162,18 @@ function createDailyRunData(run, random) {
                     .map((credit) => ({
                         id: credit.id,
                         media_type: credit.media_type || 'movie',
-                        popularity: credit.popularity || 0
+                        popularity: credit.popularity || 0,
+                        vote_count: credit.vote_count || 0
                     }));
             }
         }
 
         const topRelated = candidates
             .filter((candidate) => isAllowed(candidate, modifiers))
-            .sort((a, b) => b.popularity - a.popularity)[0];
+            .sort((a, b) =>
+                (b.vote_count - a.vote_count) ||
+                (b.popularity - a.popularity)
+            )[0];
         if (!topRelated) return;
 
         const topRelatedKey = `${topRelated.media_type}:${topRelated.id}`;
@@ -265,6 +270,12 @@ async function renderDailyRun(data) {
             ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.profile_path}`
             : '');
     const getName = (item) => item.title || item.name || 'Unknown item';
+    const parseBannedItemKey = (key) => {
+        const [first, second] = String(key).split(':');
+        return Number.isNaN(Number(first))
+            ? { id: Number(second), mediaType: first }
+            : { id: Number(first), mediaType: second };
+    };
 
     const modifierLabels = [
         ['target-name-only', 'Target name only'],
@@ -277,7 +288,7 @@ async function renderDailyRun(data) {
 
     if (data.modifiers.bannedItems?.length) {
         const bannedNames = await Promise.all(data.modifiers.bannedItems.map(async (key) => {
-            const [id, mediaType] = String(key).split(':');
+            const { id, mediaType } = parseBannedItemKey(key);
             try {
                 const item = await window.fetchDetails(Number(id), mediaType);
                 return getName(item);
