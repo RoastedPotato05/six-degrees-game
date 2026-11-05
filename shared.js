@@ -28847,7 +28847,7 @@ function createDailyRandom(seedText) {
 
 function parseDailyDate(value) {
     const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
-    if (!match) throw new Error('Stop date must use MM/DD/YYYY format.');
+    if (!match) throw new Error('Dates must use MM/DD/YYYY format.');
 
     const month = Number(match[1]);
     const day = Number(match[2]);
@@ -28858,29 +28858,92 @@ function parseDailyDate(value) {
         parsed.getMonth() !== month - 1 ||
         parsed.getDate() !== day
     ) {
-        throw new Error(`Invalid stop date: ${value}`);
+        throw new Error(`Invalid date: ${value}`);
     }
     return parsed;
 }
 
-window.generateDailyRunsThrough = async function (stopDateText) {
+function parseDailyItemKey(key) {
+    const [first, second] = String(key).split(':');
+    return Number.isNaN(Number(first))
+        ? { id: Number(second), media_type: first }
+        : { id: Number(first), media_type: second };
+}
+
+async function formatDailyRunsForFile(runs) {
+    const labels = new Map();
+    const keys = [...new Set(runs.flatMap((run) => [
+        run.from_key,
+        run.to_key,
+        ...(Array.isArray(run.shortestPath) ? run.shortestPath : []),
+        ...(Array.isArray(run.bannedItems) ? run.bannedItems : [])
+    ]))];
+
+    await Promise.all(keys.map(async (key) => {
+        const { id, media_type } = parseDailyItemKey(key);
+        try {
+            const item = await fetchDetails(id, media_type, { checkLocalImage: false });
+            labels.set(key, item.title || item.name || key);
+        } catch (error) {
+            console.error(`Failed to resolve daily run item ${key}:`, error);
+            labels.set(key, key);
+        }
+    }));
+
+    const quote = (value) => JSON.stringify(value);
+    const comment = (key) => ` // ${String(labels.get(key) || key).replace(/[\r\n]/g, ' ')}`;
+    const formatRun = (run) => {
+        const bannedItems = Array.isArray(run.bannedItems) ? run.bannedItems : [];
+        return [
+            '  {',
+            `    "date": ${quote(run.date)},`,
+            `    "from_key": ${quote(run.from_key)},${comment(run.from_key)}`,
+            `    "to_key": ${quote(run.to_key)},${comment(run.to_key)}`,
+            `    "target-name-only": ${Boolean(run['target-name-only'])},`,
+            `    "no-mcu": ${Boolean(run['no-mcu'])},`,
+            `    "no-big-3": ${Boolean(run['no-big-3'])},`,
+            `    "no-talk-shows": ${Boolean(run['no-talk-shows'])},`,
+            `    "no-tv": ${Boolean(run['no-tv'])},`,
+            `    "no-movies": ${Boolean(run['no-movies'])},`,
+            ...(Array.isArray(run.shortestPath)
+                ? [
+                    '    "shortestPath": [',
+                    ...run.shortestPath.map((key, index) =>
+                        `      ${quote(key)}${index < run.shortestPath.length - 1 ? ',' : ''}${comment(key)}`
+                    ),
+                    '    ],'
+                ]
+                : []),
+            '    "bannedItems": [',
+            ...bannedItems.map((key, index) =>
+                `      ${quote(key)}${index < bannedItems.length - 1 ? ',' : ''}${comment(key)}`
+            ),
+            '    ]',
+            '  }'
+        ].join('\n');
+    };
+
+    return `export const DAILY_RUNS = [\n${runs.map(formatRun).join(',\n')}\n];\n\nwindow.DAILY_RUNS = DAILY_RUNS;`;
+}
+
+window.generateDailyRunsThrough = async function (fromDateText, toDateText) {
     await dailyRunGeneratorReady;
     await dailyRunsReady;
-    const stopDate = parseDailyDate(stopDateText);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (stopDate < today) throw new Error('Stop date cannot be before today.');
+    const fromDate = parseDailyDate(fromDateText);
+    const toDate = parseDailyDate(toDateText);
+    if (toDate < fromDate) throw new Error('To date cannot be before the from date.');
     if (typeof window.generateDailyRunData !== 'function') {
         throw new Error('Daily run generation is not ready. Run this after the app finishes loading.');
     }
 
     const generatedRuns = [...DAILY_RUNS];
     const configuredDates = new Set(DAILY_RUNS.map((run) => run.date));
-    for (const dateCursor = new Date(today); dateCursor <= stopDate; dateCursor.setDate(dateCursor.getDate() + 1)) {
+    for (const dateCursor = new Date(fromDate); dateCursor <= toDate; dateCursor.setDate(dateCursor.getDate() + 1)) {
         const dateText = dateCursor.toLocaleDateString('en-US');
         if (configuredDates.has(dateText)) {
-            console.log(`Skipping existing daily run for ${dateText}. Current run list:`);
-            console.log(JSON.stringify(generatedRuns, null, 2));
+            console.log(`Skipping existing daily run for ${dateText}.`);
+            console.log('Runs so far:');
+            console.log(await formatDailyRunsForFile(generatedRuns));
             continue;
         }
 
@@ -28895,20 +28958,23 @@ window.generateDailyRunsThrough = async function (stopDateText) {
             'no-talk-shows': Boolean(data.modifiers['no-talk-shows']),
             'no-tv': Boolean(data.modifiers['no-tv']),
             'no-movies': Boolean(data.modifiers['no-movies']),
+            shortestPath: Array.isArray(data.path) ? data.path : [],
             bannedItems: Array.isArray(data.modifiers.bannedItems) ? data.modifiers.bannedItems : []
         });
         configuredDates.add(dateText);
-        console.log(`Generated daily run for ${dateText}. Current run list:`);
-        console.log(JSON.stringify(generatedRuns, null, 2));
+        console.log(`Generated daily run for ${dateText}. Runs so far:`);
+        console.log(await formatDailyRunsForFile(generatedRuns));
     }
 
     console.log('Completed daily run list:');
-    console.log(JSON.stringify(generatedRuns, null, 2));
+    console.log(await formatDailyRunsForFile(generatedRuns));
+    console.log('Copy this into daily-runs.js:');
+    console.log(await formatDailyRunsForFile(generatedRuns));
     return generatedRuns;
 };
 
 // Uncomment manually after the app has loaded to generate and print a run list:
-// window.generateDailyRunsThrough('12/01/2026');
+window.generateDailyRunsThrough('11/05/2026', '11/15/2026');
 
 
 window.TMDB_API_KEY = TMDB_API_KEY;

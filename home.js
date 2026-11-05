@@ -189,9 +189,9 @@ function createDailyRunData(run, random) {
 
     const createModifiers = () => {
         const modifiers = {
-            'target-name-only': random() < 0.3,
+            'target-name-only': random() < 0.4,
             'no-mcu': random() < 0.8,
-            'no-big-3': random() < 0.4,
+            'no-big-3': random() < 0.3,
             'no-talk-shows': true,
             'no-tv': false,
             'no-movies': false,
@@ -234,7 +234,7 @@ function createDailyRunData(run, random) {
                     window.fetchDetails(selected.startItem.id, selected.startItem.media_type, { checkLocalImage: false }),
                     window.fetchDetails(selected.goalItem.id, selected.goalItem.media_type, { checkLocalImage: false })
                 ]);
-                if (random() < 0.7) {
+                if (random() < 0.8) {
                     addTopRelatedBan(start, modifiers);
                     addTopRelatedBan(goal, modifiers);
                 }
